@@ -1,0 +1,106 @@
+@mixin feature() {
+  .esri-feature__title {
+    font-size: $font-size;
+    display: block;
+    word-break: break-word;
+    word-wrap: break-word;
+  }
+
+  .esri-feature calcite-icon {
+    box-sizing: content-box;
+  }
+
+  .esri-feature__attachments {
+    display: flex;
+  }
+  .esri-feature__loading-container {
+    width: 100%;
+    justify-content: center;
+    display: flex;
+    padding: $cap-spacing 0;
+  }
+
+  .esri-feature-relationship {
+    position: relative;
+  }
+
+  .esri-feature-relationship__list {
+    min-height: $list-item-height;
+  }
+
+  .esri-feature-relationship__list-item--hidden {
+    display: none;
+  }
+
+  .esri-feature__feature-observer {
+    position: relative;
+    z-index: 2;
+    bottom: 20px;
+    text-align: center;
+  }
+
+  .esri-feature__sticky-loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: $list-item-height;
+    padding: 0;
+    margin: 0;
+    pointer-events: none;
+    position: sticky;
+    bottom: 10px;
+    z-index: 2;
+  }
+
+  .esri-icon-loading-indicator {
+    display: inline-block;
+  }
+
+  .esri-feature {
+    width: 100%;
+    --calcite-ui-background: $background-color;
+  }
+
+  .esri-feature__content-element {
+    padding: 0 $side-spacing--half;
+    margin-bottom: $cap-spacing--double;
+  }
+
+  .esri-feature__content-element:last-child {
+    margin-bottom: $cap-spacing;
+  }
+
+  .esri-feature__content-node {
+    display: flex;
+    flex-direction: column;
+  }
+  .esri-feature__text {
+    line-height: 1.3;
+  }
+
+  // ATTACHMENTS
+  .esri-feature-attachments {
+    flex-flow: column wrap;
+    align-items: flex-start;
+  }
+
+  .esri-feature__last-edited-info {
+    font-size: $font-size--small;
+    padding-top: $cap-spacing--half;
+  }
+
+  //  RTL
+  [dir="rtl"] {
+    .esri-feature__attachments-title {
+      margin: 0 0 0 auto;
+    }
+    .esri-feature__attachments--list .esri-feature__attachment-item-mask {
+      margin-right: 0;
+      margin-left: $side-spacing--half;
+    }
+  }
+}
+
+@if $include_Feature==true {
+  @include feature();
+}
