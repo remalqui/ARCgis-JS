@@ -3,17 +3,23 @@ import MapView from '@arcgis/core/views/MapView';
 import config from '@arcgis/core/config';
 import Graphic from '@arcgis/core/Graphic.js';
 import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer.js';
+import WebStyleSymbol from "@arcgis/core/symbols/WebStyleSymbol.js";
 
 
 config.apiKey = 'AAPK5e0a32880aae4a70a5dc38877ee2846e7o3jkkVClLIrbPdDakzoq7B3_SjkF9FedMbVnCjcS-ealECOVG9ReuAr9EeSmVEL';
 let infoPanel;  // Info panel for place information
-let activeCategory = "0";  // Landmarks and Outdoors category
-let activeCategory1 = "0"; // Landmarks and Outdoors category
-let activeCategory2 = "0"; // Landmarks and Outdoors category
+let activeCategory = "0";  // categoria del vendor
+let activeCategory1 = "0"; // categoria de la fecha
+let activeCategory2 = "0"; // Categoria para mostrar las rutas
 
-// GraphicsLayer for map buffer
+// GraphicsLayer para las rutas de los vendedores
 const bufferLayer = new GraphicsLayer({
   id: "bufferLayer"
+});
+
+// GraphicsLayer para los puntos de venta
+const placesLayer = new GraphicsLayer({
+  id: "placesLayer"
 });
 
 // Info panel interactions
@@ -24,7 +30,7 @@ const flow = document.getElementById("flow");
 
 const map = new Map ({
   basemap: 'streets-navigation-vector',
-  layers : bufferLayer
+  layers : [bufferLayer, placesLayer]
 });
 
 const view = new MapView({
@@ -36,7 +42,8 @@ const view = new MapView({
 
     // Clear graphics and results from the previous place search
     function clearGraphics() {
-      bufferLayer.removeAll();  // Remove graphics from GraphicsLayer of previous buffer
+      bufferLayer.removeAll(); 
+      placesLayer.removeAll();  // Remove graphics from GraphicsLayer of previous buffer
       resultPanel.innerHTML = "";
       if (infoPanel) infoPanel.remove();
     }
@@ -46,16 +53,12 @@ const view = new MapView({
       activeCategory = categorySelect.value;
       clearGraphics();
       actualizarCategoria ();
-      // Pass point to the showPlaces() function with new category value
-      //activeCategory && showPlaces(activeCategory);
     });
 
     categorySelectDate.addEventListener("calciteComboboxChange", () => {
       activeCategory1 = categorySelectDate.value;
       clearGraphics();
       actualizarCategoria ();
-      // Pass point to the showPlaces() function with new category value
-      //activeCategory1 && showPlaces(activeCategory);
     });
 
 function actualizarCategoria (){
@@ -98,8 +101,16 @@ switch (activeCategory) {
     break;
 }}
 
+function createWebStyle(symbolName) {
+  return new WebStyleSymbol({
+    name: symbolName,
+    styleName: "Esri2DPointSymbolsStyle"
+  });
+}
+    // Variables para los graficos
     var polyline = {};
     var simpleLineSymbol = {};
+    var points = [];            
     
         // Display map click search area and pass to places service
         async function showPlaces(placepoint) {
@@ -118,6 +129,27 @@ switch (activeCategory) {
                     simpleLineSymbol.type = "simple-line";
                     simpleLineSymbol.color = [255, 0, 0]; // red
                     simpleLineSymbol.width =  2;
+                    
+                    points = [
+                      points[0] = { //Create a point
+                        type: "point",
+                        longitude: -77.033695,
+                        latitude: -12.065190
+                      },
+ 
+                      points[1] = { //Create a point
+                        type: "point",
+                        longitude: -77.038007,
+                        latitude: -12.067325
+                      },
+ 
+                      points[2] = { //Create a point
+                      type: "point",
+                      longitude: -77.038942,
+                      latitude: -12.069893
+                      }
+                    ];                      
+
                     break;
             case "31000":
                     polyline.type = "polyline";
@@ -132,6 +164,21 @@ switch (activeCategory) {
                     simpleLineSymbol.type = "simple-line";
                     simpleLineSymbol.color = [0, 0, 255]; // blue
                     simpleLineSymbol.width =  2;
+
+                    points = [
+                      points[0] = { //Create a point
+                        type: "point",
+                        longitude: -77.046033,
+                        latitude: -12.075140
+                      },
+ 
+                      points[1] = { //Create a point
+                        type: "point",
+                        longitude: -77.043947,
+                        latitude: -12.074847
+                      }
+                    ];                       
+
                     break;
             case "32000":
                     polyline.type = "polyline";
@@ -146,6 +193,33 @@ switch (activeCategory) {
                     simpleLineSymbol.type = "simple-line";
                     simpleLineSymbol.color = [0,128,0]; // verde
                     simpleLineSymbol.width =  2;
+
+                    points = [
+                      points[0] = { //Create a point
+                        type: "point",
+                        longitude: -77.055816,
+                        latitude: -12.091007
+                      },
+ 
+                      points[1] = { //Create a point
+                        type: "point",
+                        longitude: -77.049648,
+                        latitude: -12.088438
+                      },
+
+                      points[2] = { //Create a point
+                        type: "point",
+                        longitude: -77.044544,
+                        latitude: -12.087752
+                      },       
+                      
+                      points[3] = { //Create a point
+                        type: "point",
+                        longitude: -77.044225,
+                        latitude: -12.089623
+                      }                        
+                    ];                    
+
                     break;
             case "33000":
                     polyline.type = "polyline";
@@ -160,6 +234,15 @@ switch (activeCategory) {
                     simpleLineSymbol.type = "simple-line";
                     simpleLineSymbol.color = [0, 0, 0]; // negro
                     simpleLineSymbol.width =  2;
+
+                    points = [
+                      points[0] = { //Create a point
+                        type: "point",
+                        longitude: -77.043677,
+                        latitude: -12.087692
+                      }
+                    ];  
+                    
                     break;  
             default:
               break;
@@ -171,6 +254,16 @@ switch (activeCategory) {
           });
           // Add buffer graphic to the view
           bufferLayer.graphics.add(polylineGraphic);
+
+          for (let index = 0; index <= points.length; index++) {
+
+            const pointGraphic = new Graphic({
+              geometry: points[index],
+              symbol: createWebStyle("museum")
+           });
+          placesLayer.graphics.add(pointGraphic);
+
+          };
         }
 
 view.when(()=> {
