@@ -134,21 +134,24 @@ function createWebStyle(symbolName) {
                       points[0] = { //Create a point
                         type: "point",
                         longitude: -77.033695,
-                        latitude: -12.065190
+                        latitude: -12.065190,
+                        name : "Punto A"
                       },
  
                       points[1] = { //Create a point
                         type: "point",
                         longitude: -77.038007,
-                        latitude: -12.067325
+                        latitude: -12.067325,
+                        name : "Punto B"                        
                       },
  
                       points[2] = { //Create a point
-                      type: "point",
-                      longitude: -77.038942,
-                      latitude: -12.069893
+                        type: "point",
+                        longitude: -77.038942,
+                        latitude: -12.069893,
+                        name : "Punto C"                      
                       }
-                    ];                      
+                    ];
 
                     break;
             case "31000":
@@ -169,13 +172,15 @@ function createWebStyle(symbolName) {
                       points[0] = { //Create a point
                         type: "point",
                         longitude: -77.046033,
-                        latitude: -12.075140
+                        latitude: -12.075140,
+                        name : "Punto D"                        
                       },
  
                       points[1] = { //Create a point
                         type: "point",
                         longitude: -77.043947,
-                        latitude: -12.074847
+                        latitude: -12.074847,
+                        name : "Punto E"                        
                       }
                     ];                       
 
@@ -198,25 +203,29 @@ function createWebStyle(symbolName) {
                       points[0] = { //Create a point
                         type: "point",
                         longitude: -77.055816,
-                        latitude: -12.091007
+                        latitude: -12.091007,
+                        name : "Punto F"                        
                       },
  
                       points[1] = { //Create a point
                         type: "point",
                         longitude: -77.049648,
-                        latitude: -12.088438
+                        latitude: -12.088438,
+                        name : "Punto G"                        
                       },
 
                       points[2] = { //Create a point
                         type: "point",
                         longitude: -77.044544,
-                        latitude: -12.087752
+                        latitude: -12.087752,
+                        name : "Punto H"                        
                       },       
                       
                       points[3] = { //Create a point
                         type: "point",
                         longitude: -77.044225,
-                        latitude: -12.089623
+                        latitude: -12.089623,
+                        name : "Punto I"                        
                       }                        
                     ];                    
 
@@ -239,7 +248,8 @@ function createWebStyle(symbolName) {
                       points[0] = { //Create a point
                         type: "point",
                         longitude: -77.043677,
-                        latitude: -12.087692
+                        latitude: -12.087692,
+                        name : "Punto J"                        
                       }
                     ];  
                     
@@ -263,7 +273,13 @@ function createWebStyle(symbolName) {
            });
           placesLayer.graphics.add(pointGraphic);
 
+          var infoDiv = document.createElement("calcite-list-item");
+          infoDiv.label = points[index].name;
+          resultPanel.appendChild(infoDiv);
+
+
           };
+
         }
 
 view.when(()=> {
