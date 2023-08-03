@@ -4,7 +4,10 @@ import config from '@arcgis/core/config';
 import Graphic from '@arcgis/core/Graphic.js';
 import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer.js';
 import WebStyleSymbol from "@arcgis/core/symbols/WebStyleSymbol.js";
+import Chart from 'chart.js/auto';
 
+//############ Inicio ################# Variables #############################//
+//#############################################################################//
 
 config.apiKey = 'AAPK5e0a32880aae4a70a5dc38877ee2846e7o3jkkVClLIrbPdDakzoq7B3_SjkF9FedMbVnCjcS-ealECOVG9ReuAr9EeSmVEL';
 let infoPanel;  // Info panel for place information
@@ -40,247 +43,289 @@ const view = new MapView({
   zoom: 14
 });
 
+// Variables para los graficos
+var polyline = {};
+var simpleLineSymbol = {};
+var points = [];    
+
+//##########################################################################//
+//############ Fin ################# Variables #############################//
+
+
+//############ Inicio ################# Funciones #############################//
+//#############################################################################//
+
     // Clear graphics and results from the previous place search
-    function clearGraphics() {
-      bufferLayer.removeAll(); 
-      placesLayer.removeAll();  // Remove graphics from GraphicsLayer of previous buffer
-      resultPanel.innerHTML = "";
-      if (infoPanel) infoPanel.remove();
-    }
-    
-    // Event listener for category changes
-    categorySelect.addEventListener("calciteComboboxChange", () => {
-      activeCategory = categorySelect.value;
-      clearGraphics();
-      actualizarCategoria ();
-    });
+function clearGraphics() {
+  bufferLayer.removeAll(); 
+  placesLayer.removeAll();  // Remove graphics from GraphicsLayer of previous buffer
+  resultPanel.innerHTML = "";
+  if (infoPanel) infoPanel.remove();
+}
 
-    categorySelectDate.addEventListener("calciteComboboxChange", () => {
-      activeCategory1 = categorySelectDate.value;
-      clearGraphics();
-      actualizarCategoria ();
-    });
+// Listener para el cambio de vendedor
+categorySelect.addEventListener("calciteComboboxChange", () => {
+  activeCategory = categorySelect.value;
+  clearGraphics();
+  actualizarCategoria ();
+})
 
+// Listener para el cambio de fecha
+categorySelectDate.addEventListener("calciteComboboxChange", () => {
+  activeCategory1 = categorySelectDate.value;
+  clearGraphics();
+  actualizarCategoria ();
+})
+
+// Se setea un valor a un variable de acuerdo a la seleccion de vendedor y fecha
 function actualizarCategoria (){
-switch (activeCategory) {
-  case "10000":
-    switch (activeCategory1) {
-      case "20000":
-        activeCategory2 = "30000";
-        showPlaces(activeCategory2);
-        break;
-      
-      case "21000":
-        activeCategory2 = "31000";
-        showPlaces(activeCategory2);   
-        break;
-
-      default:
-        break;
-    }
-    break;
-
-  case "11000":
-    switch (activeCategory1) {
-      case "20000":
-        activeCategory2 = "32000";
-        showPlaces(activeCategory2);         
-        break;
-      
-      case "21000":
-        activeCategory2 = "33000";
-        showPlaces(activeCategory2);           
-        break;
+  switch (activeCategory) {
+    case "10000":
+      switch (activeCategory1) {
+        case "20000":
+          activeCategory2 = "30000";
+          showPlaces(activeCategory2);
+          break;
+        
+        case "21000":
+          activeCategory2 = "31000";
+          showPlaces(activeCategory2);   
+          break;
   
-      default:
-        break;
-    }  
-    break;
-
-  default:
-    break;
+        default:
+          break;
+      }
+      break;
+  
+    case "11000":
+      switch (activeCategory1) {
+        case "20000":
+          activeCategory2 = "32000";
+          showPlaces(activeCategory2);         
+          break;
+        
+        case "21000":
+          activeCategory2 = "33000";
+          showPlaces(activeCategory2);           
+          break;
+    
+        default:
+          break;
+      }  
+      break;
+  
+    default:
+      break;
 }}
 
+// Sirve para agregarle un icono a los puntos venta
 function createWebStyle(symbolName) {
   return new WebStyleSymbol({
     name: symbolName,
     styleName: "Esri2DPointSymbolsStyle"
   });
 }
-    // Variables para los graficos
-    var polyline = {};
-    var simpleLineSymbol = {};
-    var points = [];            
+
+//##########################################################################//
+//############ Fin ################# Funciones #############################//
+        
     
         // Display map click search area and pass to places service
-        async function showPlaces(placepoint) {
-          
-          switch (placepoint) {
-            case "30000":
-                    polyline.type = "polyline";
-                    polyline.paths = [
-                         [ -77.033695, -12.065190 ],
-                         [ -77.035019, -12.066749 ],
-                         [ -77.038007, -12.067325 ],
-                         [ -77.038067, -12.067855 ],
-                         [ -77.038942, -12.069893 ]
-                    ];
-
-                    simpleLineSymbol.type = "simple-line";
-                    simpleLineSymbol.color = [255, 0, 0]; // red
-                    simpleLineSymbol.width =  2;
-                    
-                    points = [
-                      points[0] = { //Create a point
-                        type: "point",
-                        longitude: -77.033695,
-                        latitude: -12.065190,
-                        name : "Punto A"
-                      },
- 
-                      points[1] = { //Create a point
-                        type: "point",
-                        longitude: -77.038007,
-                        latitude: -12.067325,
-                        name : "Punto B"                        
-                      },
- 
-                      points[2] = { //Create a point
-                        type: "point",
-                        longitude: -77.038942,
-                        latitude: -12.069893,
-                        name : "Punto C"                      
-                      }
-                    ];
-
-                    break;
-            case "31000":
-                    polyline.type = "polyline";
-                    polyline.paths = [
-                         [ -77.047588 , -12.075061 ],
-                         [ -77.046033 , -12.075140 ],
-                         [ -77.044316 , -12.075162 ],
-                         [ -77.043947 , -12.074847 ],
-                         [ -77.044831 , -12.072980 ]
-                    ];
-
-                    simpleLineSymbol.type = "simple-line";
-                    simpleLineSymbol.color = [0, 0, 255]; // blue
-                    simpleLineSymbol.width =  2;
-
-                    points = [
-                      points[0] = { //Create a point
-                        type: "point",
-                        longitude: -77.046033,
-                        latitude: -12.075140,
-                        name : "Punto D"                        
-                      },
- 
-                      points[1] = { //Create a point
-                        type: "point",
-                        longitude: -77.043947,
-                        latitude: -12.074847,
-                        name : "Punto E"                        
-                      }
-                    ];                       
-
-                    break;
-            case "32000":
-                    polyline.type = "polyline";
-                    polyline.paths = [
-                         [ -77.055816 , -12.091007 ],
-                         [ -77.050850 , -12.088260 ],
-                         [ -77.049648 , -12.088438 ],
-                         [ -77.044544 , -12.087752 ],
-                         [ -77.044225 , -12.089623 ]
-                    ];
-
-                    simpleLineSymbol.type = "simple-line";
-                    simpleLineSymbol.color = [0,128,0]; // verde
-                    simpleLineSymbol.width =  2;
-
-                    points = [
-                      points[0] = { //Create a point
-                        type: "point",
-                        longitude: -77.055816,
-                        latitude: -12.091007,
-                        name : "Punto F"                        
-                      },
- 
-                      points[1] = { //Create a point
-                        type: "point",
-                        longitude: -77.049648,
-                        latitude: -12.088438,
-                        name : "Punto G"                        
-                      },
-
-                      points[2] = { //Create a point
-                        type: "point",
-                        longitude: -77.044544,
-                        latitude: -12.087752,
-                        name : "Punto H"                        
-                      },       
-                      
-                      points[3] = { //Create a point
-                        type: "point",
-                        longitude: -77.044225,
-                        latitude: -12.089623,
-                        name : "Punto I"                        
-                      }                        
-                    ];                    
-
-                    break;
-            case "33000":
-                    polyline.type = "polyline";
-                    polyline.paths = [
-                         [ -77.042431 , -12.084649 ],
-                         [ -77.041985 , -12.087816 ],
-                         [ -77.042510 , -12.087948 ],
-                         [ -77.043677 , -12.087692 ],
-                         [ -77.045893 , -12.087860 ]
-                    ];
+async function showPlaces(placepoint) {
   
-                    simpleLineSymbol.type = "simple-line";
-                    simpleLineSymbol.color = [0, 0, 0]; // negro
-                    simpleLineSymbol.width =  2;
+  switch (placepoint) {
+    case "30000":
+            polyline.type = "polyline";
+            polyline.paths = [
+                 [ -77.033695, -12.065190 ],
+                 [ -77.035019, -12.066749 ],
+                 [ -77.038007, -12.067325 ],
+                 [ -77.038067, -12.067855 ],
+                 [ -77.038942, -12.069893 ]
+            ];
+            simpleLineSymbol.type = "simple-line";
+            simpleLineSymbol.color = [255, 0, 0]; // red
+            simpleLineSymbol.width =  2;
+            
+            points = [
+              points[0] = { //Create a point
+                type: "point",
+                longitude: -77.033695,
+                latitude: -12.065190,
+                name : "Punto A"
+              },
+              points[1] = { //Create a point
+                type: "point",
+                longitude: -77.038007,
+                latitude: -12.067325,
+                name : "Punto B"                        
+              },
+              points[2] = { //Create a point
+                type: "point",
+                longitude: -77.038942,
+                latitude: -12.069893,
+                name : "Punto C"                      
+              }
+            ];
+            break;
+    case "31000":
+            polyline.type = "polyline";
+            polyline.paths = [
+                 [ -77.047588 , -12.075061 ],
+                 [ -77.046033 , -12.075140 ],
+                 [ -77.044316 , -12.075162 ],
+                 [ -77.043947 , -12.074847 ],
+                 [ -77.044831 , -12.072980 ]
+            ];
+            simpleLineSymbol.type = "simple-line";
+            simpleLineSymbol.color = [0, 0, 255]; // blue
+            simpleLineSymbol.width =  2;
+            points = [
+              points[0] = { //Create a point
+                type: "point",
+                longitude: -77.046033,
+                latitude: -12.075140,
+                name : "Punto D"                        
+              },
+              points[1] = { //Create a point
+                type: "point",
+                longitude: -77.043947,
+                latitude: -12.074847,
+                name : "Punto E"                        
+              }
+            ];                       
+            break;
+    case "32000":
+            polyline.type = "polyline";
+            polyline.paths = [
+                 [ -77.055816 , -12.091007 ],
+                 [ -77.050850 , -12.088260 ],
+                 [ -77.049648 , -12.088438 ],
+                 [ -77.044544 , -12.087752 ],
+                 [ -77.044225 , -12.089623 ]
+            ];
+            simpleLineSymbol.type = "simple-line";
+            simpleLineSymbol.color = [0,128,0]; // verde
+            simpleLineSymbol.width =  2;
+            points = [
+              points[0] = { //Create a point
+                type: "point",
+                longitude: -77.055816,
+                latitude: -12.091007,
+                name : "Punto F"                        
+              },
+              points[1] = { //Create a point
+                type: "point",
+                longitude: -77.049648,
+                latitude: -12.088438,
+                name : "Punto G"                        
+              },
+              points[2] = { //Create a point
+                type: "point",
+                longitude: -77.044544,
+                latitude: -12.087752,
+                name : "Punto H"                        
+              },       
+              points[3] = { //Create a point
+                type: "point",
+                longitude: -77.044225,
+                latitude: -12.089623,
+                name : "Punto I"                        
+              }                        
+            ];                    
+            break;
+    case "33000":
+            polyline.type = "polyline";
+            polyline.paths = [
+                 [ -77.042431 , -12.084649 ],
+                 [ -77.041985 , -12.087816 ],
+                 [ -77.042510 , -12.087948 ],
+                 [ -77.043677 , -12.087692 ],
+                 [ -77.045893 , -12.087860 ]
+            ];
+            
+            simpleLineSymbol.type = "simple-line";
+            simpleLineSymbol.color = [0, 0, 0]; // negro
+            simpleLineSymbol.width =  2;
+            points = [
+              points[0] = { //Create a point
+                type: "point",
+                longitude: -77.043677,
+                latitude: -12.087692,
+                name : "Punto J"                        
+              }
+            ];  
+            
+            break;  
+    default:
+      break;
+  }
+  const polylineGraphic = new Graphic({
+     geometry: polyline,
+     symbol: simpleLineSymbol
+  });
+  // Add buffer graphic to the view
+  bufferLayer.graphics.add(polylineGraphic);
+  for (let index = 0; index <= points.length; index++) {
+    const pointGraphic = new Graphic({
+      geometry: points[index],
+      symbol: createWebStyle("museum")
+   });
+  placesLayer.graphics.add(pointGraphic);
+  var infoDiv = document.createElement("calcite-list-item");
+  infoDiv.label = points[index].name;
+  resultPanel.appendChild(infoDiv);
+  };
+}
 
-                    points = [
-                      points[0] = { //Create a point
-                        type: "point",
-                        longitude: -77.043677,
-                        latitude: -12.087692,
-                        name : "Punto J"                        
-                      }
-                    ];  
-                    
-                    break;  
-            default:
-              break;
-          }
+(async function() {
+  const data = {
+    labels: "V",
+    datasets: [
+      {
+        label: 'Si',
+        data: [1],
+        backgroundColor: 'rgb(204,0,0)'
+      },
+      {
+        label: 'No',
+        data: [2],
+        backgroundColor: 'rgb(0,34,204)'
+      },
+      {
+        label: 'Otra operadora',
+        data: [3],
+        backgroundColor: 'rgb(0,0,0)'
+      },
+    ]
+  };
 
-          const polylineGraphic = new Graphic({
-             geometry: polyline,
-             symbol: simpleLineSymbol
-          });
-          // Add buffer graphic to the view
-          bufferLayer.graphics.add(polylineGraphic);
-
-          for (let index = 0; index <= points.length; index++) {
-
-            const pointGraphic = new Graphic({
-              geometry: points[index],
-              symbol: createWebStyle("museum")
-           });
-          placesLayer.graphics.add(pointGraphic);
-
-          var infoDiv = document.createElement("calcite-list-item");
-          infoDiv.label = points[index].name;
-          resultPanel.appendChild(infoDiv);
-
-
-          };
-
-        }
+  new Chart(
+    document.getElementById('acquisitions'),
+    {
+      type: 'bar',
+      data: data,
+      options: {
+       plugins: {
+        
+         title: {
+           display: true,
+           text: 'Cambio de tecnologia'
+         },
+       },
+       responsive: true,
+       scales: {
+         x: {
+           stacked: true,
+         },
+         y: {
+           stacked: true
+         }
+       }
+      }
+    }
+  );
+})();
 
 view.when(()=> {
     console.log('view ready');

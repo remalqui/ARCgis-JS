@@ -1,0 +1,10 @@
+--Antes de iniciar el despliegue de la aplicacion debe estar instalado Node JS para que podamos instalar los paquetes, librerias via npm ----
+
+-Instalamos ARCgis Javascript-
+npm install @arcgis/core
+
+-Instalamos Vite para compilar-
+npm i vite
+
+-Instalamos chart js-
+npm install chart.js

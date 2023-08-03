@@ -15,6 +15,10 @@
          #viewDiv {
            flex: 1;
          }
+
+         #acquisitions {
+           flex: 1;
+         }
      
          #categorySelect {
            margin: 5px;
@@ -49,6 +53,7 @@
         <!-- <calcite-combobox-item selected value="16000" text-label="Landmarks and Outdoors"></calcite-combobox-item> -->
       </calcite-combobox>
       <calcite-panel class="contents">
+
         <calcite-flow id="flow">
           <calcite-flow-item>
             <calcite-list id="results">
@@ -58,15 +63,15 @@
                 </div>
               </calcite-notice>
             </calcite-list>
+            <div ><canvas id="acquisitions"></canvas></div>
           </calcite-flow-item>
         </calcite-flow>
       </calcite-panel>
     </calcite-shell-panel>
-
     <div id="viewDiv"></div>
   </calcite-shell>
-
-    <script type="module" src="/index.js"></script>
+  
+  <script type="module" src="/index.js"></script>
 </body>
 
 </html>
