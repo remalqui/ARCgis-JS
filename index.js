@@ -30,6 +30,8 @@ const categorySelect = document.getElementById("categorySelect");
 const categorySelectDate = document.getElementById("categorySelectDate");
 const resultPanel = document.getElementById("results");
 const flow = document.getElementById("flow");
+var acquisitions = document.getElementById('acquisitions');
+
 
 const map = new Map ({
   basemap: 'streets-navigation-vector',
@@ -46,7 +48,38 @@ const view = new MapView({
 // Variables para los graficos
 var polyline = {};
 var simpleLineSymbol = {};
-var points = [];    
+var points = [];
+var data = {};
+
+var myChart = new Chart(
+  acquisitions,
+  {
+    type: 'bar',
+    data: data,
+    options: {
+     plugins: {
+      
+       title: {
+         display: true,
+         text: 'Cambio de tecnologia'
+       },
+     },
+     responsive: true,
+     scales: {
+       x: {
+         stacked: true
+       },
+       y: {
+         stacked: true,
+         beginAtZero: true,
+         steps: 1,
+         stepValue: 4,
+         max: 4
+       }
+     }
+    }
+  }
+);
 
 //##########################################################################//
 //############ Fin ################# Variables #############################//
@@ -60,8 +93,16 @@ function clearGraphics() {
   bufferLayer.removeAll(); 
   placesLayer.removeAll();  // Remove graphics from GraphicsLayer of previous buffer
   resultPanel.innerHTML = "";
+  clearCanvas();
   if (infoPanel) infoPanel.remove();
 }
+
+function clearCanvas(){
+  var ctx = acquisitions.getContext("2d");
+  ctx.clearRect(0, 0, acquisitions.width, acquisitions.height);
+  //ctx.beginPath();  
+}
+
 
 // Listener para el cambio de vendedor
 categorySelect.addEventListener("calciteComboboxChange", () => {
@@ -79,20 +120,25 @@ categorySelectDate.addEventListener("calciteComboboxChange", () => {
 
 // Se setea un valor a un variable de acuerdo a la seleccion de vendedor y fecha
 function actualizarCategoria (){
+  console.log(activeCategory, activeCategory1);
   switch (activeCategory) {
     case "10000":
       switch (activeCategory1) {
         case "20000":
           activeCategory2 = "30000";
           showPlaces(activeCategory2);
+          estadistica(activeCategory2);
           break;
         
         case "21000":
           activeCategory2 = "31000";
-          showPlaces(activeCategory2);   
+          showPlaces(activeCategory2);
+          estadistica(activeCategory2);          
           break;
   
         default:
+          activeCategory2 = "0";
+          estadistica(activeCategory2);
           break;
       }
       break;
@@ -101,22 +147,30 @@ function actualizarCategoria (){
       switch (activeCategory1) {
         case "20000":
           activeCategory2 = "32000";
-          showPlaces(activeCategory2);         
+          showPlaces(activeCategory2);
+          estadistica(activeCategory2);          
           break;
         
         case "21000":
           activeCategory2 = "33000";
-          showPlaces(activeCategory2);           
+          showPlaces(activeCategory2);
+          estadistica(activeCategory2);          
           break;
     
         default:
+          activeCategory2 = "0";
+          estadistica(activeCategory2);
           break;
       }  
       break;
   
     default:
+      activeCategory2 = "0";
+      estadistica(activeCategory2);
       break;
-}}
+}
+console.log(activeCategory2);
+}
 
 // Sirve para agregarle un icono a los puntos venta
 function createWebStyle(symbolName) {
@@ -278,54 +332,101 @@ async function showPlaces(placepoint) {
   };
 }
 
-(async function() {
-  const data = {
-    labels: "V",
-    datasets: [
-      {
-        label: 'Si',
-        data: [1],
-        backgroundColor: 'rgb(204,0,0)'
-      },
-      {
-        label: 'No',
-        data: [2],
-        backgroundColor: 'rgb(0,34,204)'
-      },
-      {
-        label: 'Otra operadora',
-        data: [3],
-        backgroundColor: 'rgb(0,0,0)'
-      },
-    ]
-  };
+async function estadistica(placepoint) {
+  
+  switch (placepoint) {
+    case "30000":
 
-  new Chart(
-    document.getElementById('acquisitions'),
-    {
-      type: 'bar',
-      data: data,
-      options: {
-       plugins: {
-        
-         title: {
-           display: true,
-           text: 'Cambio de tecnologia'
-         },
-       },
-       responsive: true,
-       scales: {
-         x: {
-           stacked: true,
-         },
-         y: {
-           stacked: true
-         }
-       }
-      }
-    }
-  );
-})();
+            data = {
+              labels: "V",
+              datasets: [
+                {
+                  label: 'Si',
+                  data: [1],
+                  backgroundColor: 'rgb(204,0,0)'
+                },
+                {
+                  label: 'No',
+                  data: [1],
+                  backgroundColor: 'rgb(0,34,204)'
+                },
+                {
+                  label: 'Otra operadora',
+                  data: [1],
+                  backgroundColor: 'rgb(0,0,0)'
+                },
+              ]
+            };
+
+            break;
+    case "31000":
+            
+            data = {
+              labels: "V",
+              datasets: [
+                {
+                  label: 'No',
+                  data: [1],
+                  backgroundColor: 'rgb(0,34,204)'
+                },
+                {
+                  label: 'Otra operadora',
+                  data: [1],
+                  backgroundColor: 'rgb(0,0,0)'
+                },
+              ]
+            };
+            
+            break;
+    case "32000":
+
+            data = {
+              labels: "V",
+              datasets: [
+                {
+                  label: 'Si',
+                  data: [3],
+                  backgroundColor: 'rgb(204,0,0)'
+                },
+                {
+                  label: 'Otra operadora',
+                  data: [1],
+                  backgroundColor: 'rgb(0,0,0)'
+                },
+              ]
+            };
+
+            break;
+    case "33000":
+            
+            data = {
+              labels: "V",
+              datasets: [
+                {
+                  label: '',
+                  data: [1],
+                  backgroundColor: 'rgb(204,0,0)'
+                }
+              ]
+            };
+
+            break;  
+    default:
+
+      data = {
+        labels: "",
+        datasets: [
+
+        ]
+      };
+      break;
+  }
+
+  myChart.data = data;
+  myChart.update();
+
+      
+}
 
 view.when(()=> {
     console.log('view ready');
