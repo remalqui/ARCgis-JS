@@ -403,7 +403,7 @@ async function estadistica(placepoint) {
               labels: "V",
               datasets: [
                 {
-                  label: '',
+                  label: 'Si',
                   data: [1],
                   backgroundColor: 'rgb(204,0,0)'
                 }
