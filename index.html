@@ -3,7 +3,13 @@
 <head>
        <meta charset="UTF-8" />
        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+       <script type="module" src="https://js.arcgis.com/calcite-components/1.6.1/calcite.esm.js"></script>
+       <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/1.6.1/calcite.css" />
+
+       <script src="https://js.arcgis.com/4.27/"></script>
        <link rel="stylesheet" href="https://js.arcgis.com/4.27/esri/themes/light/main.css">
+
        <style>
          html,
          body {
@@ -33,39 +39,34 @@
          }
        </style>
            <title>Richix Mapita</title>
-
-        <script type="module" src="https://js.arcgis.com/calcite-components/1.4.2/calcite.esm.js"></script>
-        <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/1.4.2/calcite.css" />
-       
     </head>
 <body>
-
   <calcite-shell>
     <calcite-shell-panel slot="panel-start" position="start" id="contents">
-      <calcite-combobox id="categorySelect" placeholder="Seleccione el vendor" overlay-positioning="fixed" selection-mode="single">
+    <calcite-panel heading="Seleccione el vendedor y la fecha para mostrar las rutas">
+
+    <calcite-block heading="Configuracion" open>
+      <calcite-combobox id="categorySelect" placeholder="Seleccione el vendedor" overlay-positioning="fixed" selection-mode="single">
         <calcite-combobox-item value="10000" text-label="Vendor A"></calcite-combobox-item>
         <calcite-combobox-item value="11000" text-label="Vendor B"></calcite-combobox-item>
-        <!-- <calcite-combobox-item selected value="16000" text-label="Landmarks and Outdoors"></calcite-combobox-item> -->
       </calcite-combobox>
       <calcite-combobox id="categorySelectDate" placeholder="Seleccione la fecha" overlay-positioning="fixed" selection-mode="single">
         <calcite-combobox-item value="20000" text-label="25/07/2023"></calcite-combobox-item>
         <calcite-combobox-item value="21000" text-label="26/07/2023"></calcite-combobox-item>
-        <!-- <calcite-combobox-item selected value="16000" text-label="Landmarks and Outdoors"></calcite-combobox-item> -->
       </calcite-combobox>
-      <calcite-panel class="contents">
+    </calcite-block>
+    <calcite-block heading="Estadistica" open>
+      <div ><canvas id="acquisitions"></canvas></div>
+    </calcite-block>
+    <calcite-block heading="Puntos de venta" open>
+      <calcite-flow id="flow">
+        <calcite-flow-item>
+          <calcite-list id="results">
+          </calcite-list>
+        </calcite-flow-item>
+      </calcite-flow>
+    </calcite-block>
 
-        <calcite-flow id="flow">
-          <calcite-flow-item>
-            <calcite-list id="results">
-              <calcite-notice open>
-                <div slot="message">
-                  Seleccione el vendor y la fecha para mostrar las rutas
-                </div>
-              </calcite-notice>
-            </calcite-list>
-            <div ><canvas id="acquisitions"></canvas></div>
-          </calcite-flow-item>
-        </calcite-flow>
       </calcite-panel>
     </calcite-shell-panel>
     <div id="viewDiv"></div>

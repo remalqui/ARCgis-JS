@@ -11,7 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "@arcgis/core": "^4.27.6",
-    "chart.js": "^4.3.2",
+    "@esri/calcite-components": "^1.6.1",
+    "chart.js": "^4.3.3",
     "vite": "^4.4.7"
   },
   "engines": {

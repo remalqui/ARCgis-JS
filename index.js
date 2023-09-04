@@ -3,7 +3,7 @@ import MapView from '@arcgis/core/views/MapView';
 import config from '@arcgis/core/config';
 import Graphic from '@arcgis/core/Graphic.js';
 import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer.js';
-import WebStyleSymbol from "@arcgis/core/symbols/WebStyleSymbol.js";
+import WebStyleSymbol from '@arcgis/core/symbols/WebStyleSymbol.js';
 import Chart from 'chart.js/auto';
 
 //############ Inicio ################# Variables #############################//
@@ -32,7 +32,7 @@ const resultPanel = document.getElementById("results");
 const flow = document.getElementById("flow");
 var acquisitions = document.getElementById('acquisitions');
 
-
+// Variables para las visualizaciones
 const map = new Map ({
   basemap: 'streets-navigation-vector',
   layers : [bufferLayer, placesLayer]
