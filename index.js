@@ -109,6 +109,7 @@ categorySelect.addEventListener("calciteComboboxChange", () => {
   activeCategory = categorySelect.value;
   clearGraphics();
   actualizarCategoria ();
+  view.closePopup();
 })
 
 // Listener para el cambio de fecha
@@ -116,6 +117,7 @@ categorySelectDate.addEventListener("calciteComboboxChange", () => {
   activeCategory1 = categorySelectDate.value;
   clearGraphics();
   actualizarCategoria ();
+  view.closePopup();
 })
 
 // Se setea un valor a un variable de acuerdo a la seleccion de vendedor y fecha
@@ -328,6 +330,15 @@ async function showPlaces(placepoint) {
   placesLayer.graphics.add(pointGraphic);
   var infoDiv = document.createElement("calcite-list-item");
   infoDiv.label = points[index].name;
+
+  infoDiv.addEventListener("click", async () => {
+    view.openPopup({
+      location: {longitude: points[index].longitude, latitude: points[index].latitude},
+      title: points[index].name
+    });
+
+  });
+
   resultPanel.appendChild(infoDiv);
   };
 }
