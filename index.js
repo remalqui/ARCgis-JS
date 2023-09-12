@@ -1,39 +1,40 @@
-import Map from '@arcgis/core/Map';
 import MapView from '@arcgis/core/views/MapView';
-import config from '@arcgis/core/config';
+import configKey from '@arcgis/core/config';
 import Graphic from '@arcgis/core/Graphic.js';
 import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer.js';
-import WebStyleSymbol from '@arcgis/core/symbols/WebStyleSymbol.js';
 import Chart from 'chart.js/auto';
+import BasemapGallery from "@arcgis/core/widgets/BasemapGallery.js";
+import LayerList from "@arcgis/core/widgets/LayerList.js";
+import WebMap from "@arcgis/core/WebMap.js";
 
 //############ Inicio ################# Variables #############################//
 //#############################################################################//
 
-config.apiKey = 'AAPK5e0a32880aae4a70a5dc38877ee2846e7o3jkkVClLIrbPdDakzoq7B3_SjkF9FedMbVnCjcS-ealECOVG9ReuAr9EeSmVEL';
-let infoPanel;  // Info panel for place information
+configKey.apiKey = 'AAPK5e0a32880aae4a70a5dc38877ee2846e7o3jkkVClLIrbPdDakzoq7B3_SjkF9FedMbVnCjcS-ealECOVG9ReuAr9EeSmVEL';
 let activeCategory = "0";  // categoria del vendor
 let activeCategory1 = "0"; // categoria de la fecha
 let activeCategory2 = "0"; // Categoria para mostrar las rutas
 
 // GraphicsLayer para las rutas de los vendedores
 const bufferLayer = new GraphicsLayer({
-  id: "bufferLayer"
+  id: "bufferLayer",
+  title : 'Recorrido'
 });
 
 // GraphicsLayer para los puntos de venta
 const placesLayer = new GraphicsLayer({
-  id: "placesLayer"
+  id: "placesLayer",
+  title : 'Puntos de venta'
 });
 
 // Info panel interactions
-const categorySelect = document.getElementById("categorySelect");
-const categorySelectDate = document.getElementById("categorySelectDate");
-const resultPanel = document.getElementById("results");
-const flow = document.getElementById("flow");
+const categorySelect = document.getElementById('categorySelect');
+const categorySelectDate = document.getElementById('categorySelectDate');
+const resultPanel = document.getElementById('results');
 var acquisitions = document.getElementById('acquisitions');
 
-// Variables para las visualizaciones
-const map = new Map ({
+
+const map = new WebMap({
   basemap: 'streets-navigation-vector',
   layers : [bufferLayer, placesLayer]
 });
@@ -45,41 +46,157 @@ const view = new MapView({
   zoom: 14
 });
 
+view.ui.move("zoom", "above-left");
+
+const basemaps = new BasemapGallery({
+  view : view,
+  container: "basemaps-container"
+});
+
+const layerList = new LayerList({
+  view : view,
+  selectionEnabled: true,
+  container: "layers-container"
+});
+
+
+// configuracion de los widgets de layers y basemap
+ map.when(() => {
+
+  let activeWidget;
+
+  const handleActionBarClick = ({ target }) => {
+    if (target.tagName !== "CALCITE-ACTION") {
+      return;
+    }
+
+    if (activeWidget) {
+      document.querySelector(`[data-action-id=${activeWidget}]`).active = false;
+      document.querySelector(`[data-panel-id=${activeWidget}]`).hidden = true;
+    }
+
+    const nextWidget = target.dataset.actionId;
+    if (nextWidget !== activeWidget) {
+      document.querySelector(`[data-action-id=${nextWidget}]`).active = true;
+      document.querySelector(`[data-panel-id=${nextWidget}]`).hidden = false;
+      activeWidget = nextWidget;
+    } else {
+      activeWidget = null;
+    }
+  };
+
+  document.querySelector("calcite-action-bar").addEventListener("click", handleActionBarClick);
+
+  let actionBarExpanded = false;
+
+  document.addEventListener("calciteActionBarToggle", event => {
+    actionBarExpanded = !actionBarExpanded;
+    view.padding = {
+      left: actionBarExpanded ? 10 : 10
+    };
+  });
+
+   document.querySelector("calcite-shell").hidden = false;
+   document.querySelector("calcite-loader").hidden = true; 
+});
+
 // Variables para los graficos
-var polyline = {};
-var simpleLineSymbol = {};
+var polyline = {
+  type : "polyline",
+  paths : []
+};
+var simpleLineSymbol = {
+   color: [0, 176, 255],
+   type : "simple-line",
+   width : 3,
+   join : "round",
+   style : "solid"
+   };
+
 var points = [];
 var data = {};
 
+const customBar = {
+id: 'customBar',
+beforeDatasetsDraw(chart,args,pluginOptions){
+   const {ctx, config, data, chartArea : {top, bottom, left, right, width, height}, scales : {x,y} } = chart;
+   ctx.save();
+ 
+   const datapointArray = data.datasets.map((dataset, index) => {
+     return dataset.data[0];
+   })
+   console.log(datapointArray)
+
+   const accumulate = array => array.map((sum => value => sum+= value)(0));
+   const cumulativeSumArray = accumulate(datapointArray);
+   console.log(cumulativeSumArray);
+   cumulativeSumArray.unshift(0);
+
+   for (let i = 0; i < datapointArray.length; i++) {
+    ctx.font = 'bolder 20px sans-serif';
+    ctx.fillStyle = 'black';
+    ctx.fillText(`${datapointArray[i]}`, x.getPixelForValue(cumulativeSumArray[i])+20, 20);
+    
+    ctx.font = 'bolder 15px sans-serif';
+    ctx.fillStyle = '#666';
+    ctx.fillText(data.datasets[i].label, x.getPixelForValue(cumulativeSumArray[i])+20, 35);
+   }
+
+ }
+};
+
+//configuracion del grafico estadistico
+const config = {
+  type: 'bar',
+  data: data,
+  options: {
+    responsive: true,
+    aspectRatio : 3,
+    indexAxis: 'y',
+    borderSkipped:false,
+    borderWidth:1,
+    barPercentage:1,
+    categoryPercentage:1,
+    scales: {
+      x: {
+        stacked: true,
+        grid: {
+         display:false,
+         drawBorder:false,
+         drawTicks:false
+        },
+        ticks:{
+         display:false
+        }
+      },
+      y: {
+        beginAtZero: true,
+        stacked: true,
+        grid: {
+         display:false,
+         drawBorder:false,
+         drawTicks:false
+        },
+        ticks:{
+         display:false
+        }
+      }
+    },
+   plugins: {
+    legend:{
+      display:false
+    }
+   }
+  },
+  plugins: [customBar]
+};
+
+//seteo de parametros del grafico
 var myChart = new Chart(
   acquisitions,
-  {
-    type: 'bar',
-    data: data,
-    options: {
-     plugins: {
-      
-       title: {
-         display: true,
-         text: 'Cambio de tecnologia'
-       },
-     },
-     responsive: true,
-     scales: {
-       x: {
-         stacked: true
-       },
-       y: {
-         stacked: true,
-         beginAtZero: true,
-         steps: 1,
-         stepValue: 4,
-         max: 4
-       }
-     }
-    }
-  }
-);
+  config
+  );
+
 
 //##########################################################################//
 //############ Fin ################# Variables #############################//
@@ -94,7 +211,7 @@ function clearGraphics() {
   placesLayer.removeAll();  // Remove graphics from GraphicsLayer of previous buffer
   resultPanel.innerHTML = "";
   clearCanvas();
-  if (infoPanel) infoPanel.remove();
+  polyline.paths = [];
 }
 
 function clearCanvas(){
@@ -175,11 +292,19 @@ console.log(activeCategory2);
 }
 
 // Sirve para agregarle un icono a los puntos venta
-function createWebStyle(symbolName) {
-  return new WebStyleSymbol({
-    name: symbolName,
-    styleName: "Esri2DPointSymbolsStyle"
-  });
+function createWebStyle(color) {
+  let textSymbol = {
+    type : "text",
+    color: color,
+    text: "\ue613",
+    font: {
+      // autocasts as new Font()
+      size: 20,
+      family: "CalciteWebCoreIcons"
+    }
+  }
+
+  return textSymbol;
 }
 
 //##########################################################################//
@@ -191,39 +316,127 @@ async function showPlaces(placepoint) {
   
   switch (placepoint) {
     case "30000":
-            polyline.type = "polyline";
-            polyline.paths = [
-                 [ -77.033695, -12.065190 ],
-                 [ -77.035019, -12.066749 ],
-                 [ -77.038007, -12.067325 ],
-                 [ -77.038067, -12.067855 ],
-                 [ -77.038942, -12.069893 ]
-            ];
-            simpleLineSymbol.type = "simple-line";
-            simpleLineSymbol.color = [255, 0, 0]; // red
-            simpleLineSymbol.width =  2;
             
             points = [
               points[0] = { //Create a point
                 type: "point",
                 longitude: -77.033695,
                 latitude: -12.065190,
-                name : "Punto A"
+                name : "PV 01",
+                tecnologia : "Si"
               },
               points[1] = { //Create a point
                 type: "point",
-                longitude: -77.038007,
-                latitude: -12.067325,
-                name : "Punto B"                        
+                longitude: -77.035019,
+                latitude: -12.066749,
+                name : "PV 02",
+                tecnologia : "No"
               },
               points[2] = { //Create a point
                 type: "point",
+                longitude: -77.038007,
+                latitude: -12.067325,
+                name : "PV 03",
+                tecnologia : "No"
+              },
+              points[3] = { //Create a point
+                type: "point",
+                longitude: -77.038067,
+                latitude: -12.067855,
+                name : "PV 04",
+                tecnologia : "No"
+              },
+              points[4] = { //Create a point
+                type: "point",
                 longitude: -77.038942,
                 latitude: -12.069893,
-                name : "Punto C"                      
+                name : "PV 05",
+                tecnologia : "Si"
+              },
+              points[5] = { //Create a point
+                type: "point",
+                longitude: -77.039325,
+                latitude: -12.070402,
+                name : "PV 06",
+                tecnologia : "No"
+              },
+              points[6] = { //Create a point
+                type: "point",
+                longitude: -77.039720,
+                latitude: -12.072351,
+                name : "PV 07",
+                tecnologia : "No"
+              },
+              points[7] = { //Create a point
+                type: "point",
+                longitude: -77.041058,
+                latitude: -12.072144,
+                name : "PV 08",
+                tecnologia : "No"
+              },
+              points[8] = { //Create a point
+                type: "point",
+                longitude: -77.041396,
+                latitude: -12.072810,
+                name : "PV 09",
+                tecnologia : "Otra"                    
+              },
+              points[9] = { //Create a point
+                type: "point",
+                longitude: -77.042018,
+                latitude: -12.072774,
+                name : "PV 10",
+                tecnologia : "Si"
+              },
+              points[10] = { //Create a point
+                type: "point",
+                longitude: -77.044664,
+                latitude: -12.072745,
+                name : "PV 11",
+                tecnologia : "No"
+              },
+              points[11] = { //Create a point
+                type: "point",
+                longitude: -77.044822,
+                latitude: -12.073002,
+                name : "PV 12",
+                tecnologia : "No"
+              },
+              points[12] = { //Create a point
+                type: "point",
+                longitude: -77.045010,
+                latitude: -12.073049,
+                name : "PV 13",
+                tecnologia : "No"
+              },
+              points[13] = { //Create a point
+                type: "point",
+                longitude: -77.044997,
+                latitude: -12.073836,
+                name : "PV 14",
+                tecnologia : "Si"
+              },
+              points[14] = { //Create a point
+                type: "point",
+                longitude: -77.045028,
+                latitude: -12.075090,
+                name : "PV 15",
+                tecnologia : "No"
+              },
+              points[15] = { //Create a point
+                type: "point",
+                longitude: -77.045020,
+                latitude: -12.075858,
+                name : "PV 16",
+                tecnologia : "No"
               }
             ];
-            break;
+
+            for (let j = 0; j < points.length; j++) {
+                polyline.paths.push([points[j].longitude, points[j].latitude]) 
+            }
+             break;
+
     case "31000":
             polyline.type = "polyline";
             polyline.paths = [
@@ -233,21 +446,21 @@ async function showPlaces(placepoint) {
                  [ -77.043947 , -12.074847 ],
                  [ -77.044831 , -12.072980 ]
             ];
-            simpleLineSymbol.type = "simple-line";
-            simpleLineSymbol.color = [0, 0, 255]; // blue
-            simpleLineSymbol.width =  2;
+
             points = [
               points[0] = { //Create a point
                 type: "point",
                 longitude: -77.046033,
                 latitude: -12.075140,
-                name : "Punto D"                        
+                name : "Punto D",
+                tecnologia : "No"
               },
               points[1] = { //Create a point
                 type: "point",
                 longitude: -77.043947,
                 latitude: -12.074847,
-                name : "Punto E"                        
+                name : "Punto E",
+                tecnologia : "Otra"
               }
             ];                       
             break;
@@ -260,33 +473,35 @@ async function showPlaces(placepoint) {
                  [ -77.044544 , -12.087752 ],
                  [ -77.044225 , -12.089623 ]
             ];
-            simpleLineSymbol.type = "simple-line";
-            simpleLineSymbol.color = [0,128,0]; // verde
-            simpleLineSymbol.width =  2;
+
             points = [
               points[0] = { //Create a point
                 type: "point",
                 longitude: -77.055816,
                 latitude: -12.091007,
-                name : "Punto F"                        
+                name : "Punto F",
+                tecnologia : "Si"
               },
               points[1] = { //Create a point
                 type: "point",
                 longitude: -77.049648,
                 latitude: -12.088438,
-                name : "Punto G"                        
+                name : "Punto G",
+                tecnologia : "Si"
               },
               points[2] = { //Create a point
                 type: "point",
                 longitude: -77.044544,
                 latitude: -12.087752,
-                name : "Punto H"                        
+                name : "Punto H",
+                tecnologia : "Si"
               },       
               points[3] = { //Create a point
                 type: "point",
                 longitude: -77.044225,
                 latitude: -12.089623,
-                name : "Punto I"                        
+                name : "Punto I",
+                tecnologia : "Otra"
               }                        
             ];                    
             break;
@@ -300,15 +515,13 @@ async function showPlaces(placepoint) {
                  [ -77.045893 , -12.087860 ]
             ];
             
-            simpleLineSymbol.type = "simple-line";
-            simpleLineSymbol.color = [0, 0, 0]; // negro
-            simpleLineSymbol.width =  2;
             points = [
               points[0] = { //Create a point
                 type: "point",
                 longitude: -77.043677,
                 latitude: -12.087692,
-                name : "Punto J"                        
+                name : "Punto J",
+                tecnologia : "Si"
               }
             ];  
             
@@ -322,10 +535,29 @@ async function showPlaces(placepoint) {
   });
   // Add buffer graphic to the view
   bufferLayer.graphics.add(polylineGraphic);
+  let colorIcon = "#000000";
   for (let index = 0; index <= points.length; index++) {
+
+    switch (points[index].tecnologia) {
+      case "Si":
+        colorIcon = "#0000FF";
+        break;
+
+      case "No":
+        colorIcon = "#800080";
+        break;
+      
+      case "Otra":
+        colorIcon = "#000000";
+        break;
+
+      default:
+        colorIcon = "#000000";
+        break;
+    }
     const pointGraphic = new Graphic({
       geometry: points[index],
-      symbol: createWebStyle("museum")
+      symbol: createWebStyle(colorIcon)
    });
   placesLayer.graphics.add(pointGraphic);
   var infoDiv = document.createElement("calcite-list-item");
@@ -336,6 +568,8 @@ async function showPlaces(placepoint) {
       location: {longitude: points[index].longitude, latitude: points[index].latitude},
       title: points[index].name
     });
+
+    view.goTo(pointGraphic);
 
   });
 
@@ -348,26 +582,29 @@ async function estadistica(placepoint) {
   switch (placepoint) {
     case "30000":
 
-            data = {
-              labels: "V",
-              datasets: [
-                {
-                  label: 'Si',
-                  data: [1],
-                  backgroundColor: 'rgb(204,0,0)'
-                },
-                {
-                  label: 'No',
-                  data: [1],
-                  backgroundColor: 'rgb(0,34,204)'
-                },
-                {
-                  label: 'Otra operadora',
-                  data: [1],
-                  backgroundColor: 'rgb(0,0,0)'
-                },
-              ]
-            };
+    data = {
+      labels: ['Si'],
+      datasets: [
+        {
+        label : 'Si',
+        data: [1],
+        backgroundColor: ['rgba(0, 150, 255, 0.2)'],
+        borderColor: ['rgb(0, 150, 255)',]
+        },
+        {
+        label : 'No',
+        data: [1],
+        backgroundColor: ['rgba(122, 129, 255, 0.2)'],
+        borderColor: ['rgb(122, 129, 255)',]
+        },
+        {
+        label : 'Otra',
+        data: [1],
+        backgroundColor: ['rgba(98, 95, 95, 0.2)'],
+        borderColor: ['rgb(98, 95, 95)']
+        }
+      ]
+    };
 
             break;
     case "31000":
@@ -378,12 +615,14 @@ async function estadistica(placepoint) {
                 {
                   label: 'No',
                   data: [1],
-                  backgroundColor: 'rgb(0,34,204)'
+                  backgroundColor: ['rgba(122, 129, 255, 0.2)'],
+                  borderColor: ['rgb(122, 129, 255)',]
                 },
                 {
-                  label: 'Otra operadora',
+                  label: 'Otra',
                   data: [1],
-                  backgroundColor: 'rgb(0,0,0)'
+                  backgroundColor: ['rgba(98, 95, 95, 0.2)'],
+                  borderColor: ['rgb(98, 95, 95)']
                 },
               ]
             };
@@ -397,12 +636,14 @@ async function estadistica(placepoint) {
                 {
                   label: 'Si',
                   data: [3],
-                  backgroundColor: 'rgb(204,0,0)'
+                  backgroundColor: ['rgba(0, 150, 255, 0.2)'],
+                  borderColor: ['rgb(0, 150, 255)',]
                 },
                 {
-                  label: 'Otra operadora',
+                  label: 'Otra',
                   data: [1],
-                  backgroundColor: 'rgb(0,0,0)'
+                  backgroundColor: ['rgba(98, 95, 95, 0.2)'],
+                  borderColor: ['rgb(98, 95, 95)']
                 },
               ]
             };
@@ -416,7 +657,8 @@ async function estadistica(placepoint) {
                 {
                   label: 'Si',
                   data: [1],
-                  backgroundColor: 'rgb(204,0,0)'
+                  backgroundColor: ['rgba(0, 150, 255, 0.2)'],
+                  borderColor: ['rgb(0, 150, 255)',]
                 }
               ]
             };
@@ -426,20 +668,15 @@ async function estadistica(placepoint) {
 
       data = {
         labels: "",
-        datasets: [
-
-        ]
+        datasets: []
       };
       break;
   }
 
   myChart.data = data;
   myChart.update();
-
-      
 }
 
 view.when(()=> {
     console.log('view ready');
-
 });

@@ -4,8 +4,8 @@
        <meta charset="UTF-8" />
        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-       <script type="module" src="https://js.arcgis.com/calcite-components/1.6.1/calcite.esm.js"></script>
-       <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/1.6.1/calcite.css" />
+       <script type="module" src="https://js.arcgis.com/calcite-components/1.8.0/calcite.esm.js"></script>
+       <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/1.8.0/calcite.css" />
 
        <script src="https://js.arcgis.com/4.27/"></script>
        <link rel="stylesheet" href="https://js.arcgis.com/4.27/esri/themes/light/main.css">
@@ -18,14 +18,15 @@
            margin: 0;
            padding: 0;
          }
+
          #viewDiv {
            flex: 1;
          }
 
          #acquisitions {
-           flex: 1;
+           flex: 5;
          }
-     
+
          #categorySelect {
            margin: 5px;
          }
@@ -33,16 +34,49 @@
          #categorySelectDate {
            margin: 5px;
          }         
-     
+
          #contents {
-           --calcite-shell-panel-min-width: 340px;
+           --calcite-shell-panel-min-width: 150px;
          }
+
+         calcite-loader {
+          align-self: center;
+          justify-self: center;
+         }
+
+         #efectuado, #no-efectuado, #otra-operadora {
+          margin: 1px;
+          padding: 0px;
+
+         }
+
+         calcite-chip:first-of-type {
+            --calcite-ui-icon-color: blue;
+            --calcite-ui-background: rgba(0, 150, 255, 0.25);
+            background-color: var(--calcite-ui-background);
+        }
+        calcite-chip:nth-child(2) {
+            --calcite-ui-icon-color: purple;
+            --calcite-ui-background: rgba(122, 129, 255, 0.25);
+            background-color: var(--calcite-ui-background);
+        }
+        calcite-chip:nth-child(3){
+            --calcite-ui-icon-color: black;
+            --calcite-ui-background: rgba(98, 95, 95, 0.25);
+            background-color: var(--calcite-ui-background);
+        }  
+
        </style>
-           <title>Richix Mapita</title>
+           <title>Tracking Indra</title>
     </head>
 <body>
+
+  <calcite-loader></calcite-loader>
   <calcite-shell>
-    <calcite-shell-panel slot="panel-start" position="start" id="contents">
+
+    <calcite-shell-panel slot="panel-start" id="contents" display-mode="float" height-scale="s"
+    layout="vertical" position="start" width-scale="m">
+    <!-- <calcite-shell-panel slot="panel-start" display-mode="float"> -->
     <calcite-panel heading="Seleccione el vendedor y la fecha para mostrar las rutas">
 
     <calcite-block heading="Configuracion" open>
@@ -50,28 +84,64 @@
         <calcite-combobox-item value="10000" text-label="Vendor A"></calcite-combobox-item>
         <calcite-combobox-item value="11000" text-label="Vendor B"></calcite-combobox-item>
       </calcite-combobox>
+
       <calcite-combobox id="categorySelectDate" placeholder="Seleccione la fecha" overlay-positioning="fixed" selection-mode="single">
         <calcite-combobox-item value="20000" text-label="25/07/2023"></calcite-combobox-item>
         <calcite-combobox-item value="21000" text-label="26/07/2023"></calcite-combobox-item>
       </calcite-combobox>
     </calcite-block>
-    <calcite-block heading="Estadistica" open>
-      <div ><canvas id="acquisitions"></canvas></div>
-    </calcite-block>
-    <calcite-block heading="Puntos de venta" open>
-      <calcite-flow id="flow">
-        <calcite-flow-item>
-          <calcite-list id="results">
-          </calcite-list>
-        </calcite-flow-item>
-      </calcite-flow>
+
+    <calcite-block heading="Cambio de tecnologia" open>
+      <div><canvas id="acquisitions"></canvas></div>
     </calcite-block>
 
-      </calcite-panel>
+    <calcite-block heading="Leyenda" open>
+      <!-- <calcite-list-item-group heading="Cambio de tecnologia"> -->
+          <calcite-chip icon="circle-f" id="efectuado">Si</calcite-chip>
+          <calcite-chip icon="circle-f" id="no-efectuado">No</calcite-chip>
+          <calcite-chip icon="circle-f" id="otra-operadora">Otra oper.</calcite-chip>
+
+    </calcite-block>
+
+    <calcite-block heading="Puntos de venta" open>
+      <calcite-list id="results">
+      </calcite-list>
+    </calcite-block>
+
+
+    <calcite-action-bar slot="action-bar" expand-disabled>
+      <calcite-action data-action-id="layers" icon="layers" text="Layers"></calcite-action>
+      <calcite-action data-action-id="basemaps" icon="basemap" text="Basemaps"></calcite-action>
+    </calcite-action-bar>
+
+    <calcite-panel heading="Capas" height-scale="l" data-panel-id="layers" hidden>
+      <div id="layers-container"></div>
+    </calcite-panel>
+    <calcite-panel heading="Mapas" height-scale="l" data-panel-id="basemaps" hidden>
+      <div id="basemaps-container"></div>
+    </calcite-panel>
+
+    </calcite-panel>
     </calcite-shell-panel>
+
+<!--  <calcite-shell-panel slot="panel-start" position="middle" id="shell-panel-end" collapsed>
+
+    <calcite-action-bar slot="action-bar">
+        <calcite-action data-action-id="layers" icon="layers" text="Layers"></calcite-action>
+        <calcite-action data-action-id="basemaps" icon="basemap" text="Basemaps"></calcite-action>
+      </calcite-action-bar>
+
+      <calcite-panel heading="Capas" height-scale="l" data-panel-id="layers" hidden>
+        <div id="layers-container"></div>
+      </calcite-panel>
+      <calcite-panel heading="Basemaps" height-scale="l" data-panel-id="basemaps" hidden>
+        <div id="basemaps-container"></div>
+      </calcite-panel>
+
+    </calcite-shell-panel> -->
     <div id="viewDiv"></div>
   </calcite-shell>
-  
+
   <script type="module" src="/index.js"></script>
 </body>
 
