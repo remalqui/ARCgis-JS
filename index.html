@@ -76,8 +76,7 @@
 
     <calcite-shell-panel slot="panel-start" id="contents" display-mode="float" height-scale="s"
     layout="vertical" position="start" width-scale="m">
-    <!-- <calcite-shell-panel slot="panel-start" display-mode="float"> -->
-    <calcite-panel heading="Seleccione el vendedor y la fecha para mostrar las rutas">
+    <calcite-panel heading="Indra Tracking">
 
     <calcite-block heading="Configuracion" open>
       <calcite-combobox id="categorySelect" placeholder="Seleccione el vendedor" overlay-positioning="fixed" selection-mode="single">
@@ -96,10 +95,9 @@
     </calcite-block>
 
     <calcite-block heading="Leyenda" open>
-      <!-- <calcite-list-item-group heading="Cambio de tecnologia"> -->
-          <calcite-chip icon="circle-f" id="efectuado">Si</calcite-chip>
-          <calcite-chip icon="circle-f" id="no-efectuado">No</calcite-chip>
-          <calcite-chip icon="circle-f" id="otra-operadora">Otra oper.</calcite-chip>
+          <calcite-chip icon="pin" id="efectuado">Si</calcite-chip>
+          <calcite-chip icon="pin" id="no-efectuado">No</calcite-chip>
+          <calcite-chip icon="pin" id="otra-operadora">Otra oper.</calcite-chip>
 
     </calcite-block>
 
@@ -108,37 +106,9 @@
       </calcite-list>
     </calcite-block>
 
-
-    <calcite-action-bar slot="action-bar" expand-disabled>
-      <calcite-action data-action-id="layers" icon="layers" text="Layers"></calcite-action>
-      <calcite-action data-action-id="basemaps" icon="basemap" text="Basemaps"></calcite-action>
-    </calcite-action-bar>
-
-    <calcite-panel heading="Capas" height-scale="l" data-panel-id="layers" hidden>
-      <div id="layers-container"></div>
-    </calcite-panel>
-    <calcite-panel heading="Mapas" height-scale="l" data-panel-id="basemaps" hidden>
-      <div id="basemaps-container"></div>
-    </calcite-panel>
-
     </calcite-panel>
     </calcite-shell-panel>
 
-<!--  <calcite-shell-panel slot="panel-start" position="middle" id="shell-panel-end" collapsed>
-
-    <calcite-action-bar slot="action-bar">
-        <calcite-action data-action-id="layers" icon="layers" text="Layers"></calcite-action>
-        <calcite-action data-action-id="basemaps" icon="basemap" text="Basemaps"></calcite-action>
-      </calcite-action-bar>
-
-      <calcite-panel heading="Capas" height-scale="l" data-panel-id="layers" hidden>
-        <div id="layers-container"></div>
-      </calcite-panel>
-      <calcite-panel heading="Basemaps" height-scale="l" data-panel-id="basemaps" hidden>
-        <div id="basemaps-container"></div>
-      </calcite-panel>
-
-    </calcite-shell-panel> -->
     <div id="viewDiv"></div>
   </calcite-shell>
 
