@@ -19,6 +19,17 @@
            padding: 0;
          }
 
+         #infoDiv {
+           position: absolute;
+           top: 15px;
+           left: 500px;
+         }
+   
+         #infoDiv input {
+           border: none;
+           box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 2px;
+         }
+
          #viewDiv {
            flex: 1;
          }
@@ -110,6 +121,14 @@
     </calcite-shell-panel>
 
     <div id="viewDiv"></div>
+    <div id="infoDiv">
+      <input
+        class="esri-component esri-widget--button esri-widget esri-interactive"
+        type="button"
+        id="switch-btn"
+        value="3D"
+      />
+    </div>
   </calcite-shell>
 
   <script type="module" src="/index.js"></script>

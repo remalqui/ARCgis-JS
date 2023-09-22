@@ -7,6 +7,8 @@ import BasemapGallery from "@arcgis/core/widgets/BasemapGallery.js";
 import LayerList from "@arcgis/core/widgets/LayerList.js";
 import WebMap from "@arcgis/core/WebMap.js";
 import Expand from "@arcgis/core/widgets/Expand.js";
+import SceneView from "@arcgis/core/views/SceneView.js";
+import WebScene from "@arcgis/core/WebScene.js";
 //borrar lo de abajo
 import * as locator from "@arcgis/core/rest/locator.js";
 
@@ -37,26 +39,93 @@ const resultPanel = document.getElementById('results');
 var acquisitions = document.getElementById('acquisitions');
 
 
+//############## Inicio ############### Configuracion para 3D #############################//
+const switchButton = document.getElementById("switch-btn");
+
+const appConfig = {
+  mapView: null,
+  sceneView: null,
+  activeView: null,
+  container: "viewDiv" // use same container for views
+};
+
+const initialViewParams = {
+  zoom: 14,
+  center: [-77.043025 , -12.0809538],
+  container: appConfig.container
+};
+
 const map = new WebMap({
   basemap: 'streets-navigation-vector',
   layers : [bufferLayer, placesLayer]
 });
 
-const view = new MapView({
-  map : map,
-  container: 'viewDiv',
-  center: [-77.043025 , -12.0809538],
-  zoom: 14
+const scene = new WebScene({
+  portalItem: {
+    // autocasts as new PortalItem()
+    id: "fa4dd90d0bfd470fb0dc9e32eab0bfef"
+  }
 });
 
+// create 2D view and and set active
+appConfig.mapView = createView(initialViewParams, "2d");
+appConfig.mapView.map = map;
+appConfig.activeView = appConfig.mapView;
+
+// create 3D view, won't initialize until container is set
+initialViewParams.container = null;
+initialViewParams.map = scene;
+appConfig.sceneView = createView(initialViewParams, "3d");
+
+// switch the view between 2D and 3D each time the button is clicked
+switchButton.addEventListener("click", () => {
+  switchView();
+});
+
+function switchView() {
+  const is3D = appConfig.activeView.type === "3d";
+  const activeViewpoint = appConfig.activeView.viewpoint.clone();
+
+  // remove the reference to the container for the previous view
+  appConfig.activeView.container = null;
+
+  if (is3D) {
+    // if the input view is a SceneView, set the viewpoint on the
+    // mapView instance. Set the container on the mapView and flag
+    // it as the active view
+    appConfig.mapView.viewpoint = activeViewpoint;
+    appConfig.mapView.container = appConfig.container;
+    appConfig.activeView = appConfig.mapView;
+    switchButton.value = "3D";
+  } else {
+    appConfig.sceneView.viewpoint = activeViewpoint;
+    appConfig.sceneView.container = appConfig.container;
+    appConfig.activeView = appConfig.sceneView;
+    switchButton.value = "2D";
+  }
+}
+
+// convenience function for creating either a 2D or 3D view dependant on the type parameter
+function createView(params, type) {
+  let view;
+  if (type === "2d") {
+    view = new MapView(params);
+    return view;
+  } else {
+    view = new SceneView(params);
+  }
+  return view;
+}
+
+//############## Final ############### Configuracion para 3D #############################//
 
 const basemaps = new BasemapGallery({
-  view : view,
+  view : appConfig.activeView,
   container: document.createElement("div")
 });
 
 const layerList = new LayerList({
-  view : view,
+  view : appConfig.activeView,
   selectionEnabled: true,
   container: document.createElement("div")
 });
@@ -64,23 +133,23 @@ const layerList = new LayerList({
 const layerListExpand = new Expand({
   expandIcon: "layers",
   expandTooltip: "Lista de capas",
-  view: view,
+  view: appConfig.activeView,
   content: layerList
 });
 
 const basemapsExpand = new Expand({
   expandIcon: "basemap",
   expandTooltip: "Lista de mapas",
-  view: view,
+  view: appConfig.activeView,
   content: basemaps
 });
 
-view.ui.add(["zoom", layerListExpand,basemapsExpand],"top-left");
+appConfig.activeView.ui.add(["zoom", layerListExpand,basemapsExpand],"top-left");
 
 //############################# Borrar #############################//
 const serviceUrl = "http://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer";
 
-view.on("click", function (evt) {
+appConfig.activeView.on("click", function (evt) {
   const params = {
     location: evt.mapPoint
   };
@@ -100,7 +169,7 @@ view.on("click", function (evt) {
 });
 
 function showAddress(address, pt) {
-  view.openPopup({
+  appConfig.activeView.openPopup({
     title: address,
     content: +Math.round(pt.longitude * 100000) / 100000 + ", " + Math.round(pt.latitude * 100000) / 100000,
     location: pt
@@ -116,9 +185,9 @@ var polyline = {
 var simpleLineSymbol = {
    color: [0, 176, 255],
    type : "simple-line",
-   width : 3,
+   width : 3/* ,
    join : "round",
-   style : "solid"
+   style : "solid" */
    };
 
 var points = [];
@@ -257,7 +326,7 @@ categorySelect.addEventListener("calciteComboboxChange", () => {
   activeCategory = categorySelect.value;
   clearGraphics();
   actualizarCategoria ();
-  view.closePopup();
+  appConfig.activeView.closePopup();
 })
 
 // Listener para el cambio de fecha
@@ -265,7 +334,7 @@ categorySelectDate.addEventListener("calciteComboboxChange", () => {
   activeCategory1 = categorySelectDate.value;
   clearGraphics();
   actualizarCategoria ();
-  view.closePopup();
+  appConfig.activeView.closePopup();
 })
 
 // Se setea un valor a un variable de acuerdo a la seleccion de vendedor y fecha
@@ -935,15 +1004,15 @@ async function showPlaces(placepoint) {
 
    // Se agrega un pop-up cuando se presione cada punto de venta.
   infoDiv.addEventListener("click", async () => {
-    view.openPopup({
+    appConfig.activeView.openPopup({
       location: {longitude: elemento2.longitude, latitude: elemento2.latitude},
       title: elemento2.name
     });
-    view.goTo(pointGraphic);
+    appConfig.activeView.goTo(pointGraphic);
   });
  }); //aqui termina el for
 }
 
-view.when(()=> {
+appConfig.activeView.when(()=> {
     console.log('view ready');
 });
