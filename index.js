@@ -84,6 +84,7 @@ switchButton.addEventListener("click", () => {
 
 function switchView() {
   const is3D = appConfig.activeView.type === "3d";
+  console.log(appConfig.activeView);
   const activeViewpoint = appConfig.activeView.viewpoint.clone();
 
   // remove the reference to the container for the previous view
@@ -95,11 +96,13 @@ function switchView() {
     // it as the active view
     appConfig.mapView.viewpoint = activeViewpoint;
     appConfig.mapView.container = appConfig.container;
+    appConfig.mapView.map.layers.push(bufferLayer, placesLayer);
     appConfig.activeView = appConfig.mapView;
     switchButton.value = "3D";
   } else {
     appConfig.sceneView.viewpoint = activeViewpoint;
     appConfig.sceneView.container = appConfig.container;
+    appConfig.sceneView.map.layers.push(bufferLayer, placesLayer);
     appConfig.activeView = appConfig.sceneView;
     switchButton.value = "2D";
   }
