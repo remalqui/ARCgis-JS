@@ -11,6 +11,7 @@ import SceneView from "@arcgis/core/views/SceneView.js";
 import WebScene from "@arcgis/core/WebScene.js";
 //borrar lo de abajo
 import * as locator from "@arcgis/core/rest/locator.js";
+import Measurement from "@arcgis/core/widgets/Measurement.js";
 
 
 //############ Inicio ################# Variables #############################//
@@ -66,7 +67,6 @@ const scene = new WebScene({
     id: "fa4dd90d0bfd470fb0dc9e32eab0bfef"
   }
 });
-
 // create 2D view and and set active
 appConfig.mapView = createView(initialViewParams, "2d");
 appConfig.mapView.map = map;
@@ -84,11 +84,13 @@ switchButton.addEventListener("click", () => {
 
 function switchView() {
   const is3D = appConfig.activeView.type === "3d";
-  console.log(appConfig.activeView);
   const activeViewpoint = appConfig.activeView.viewpoint.clone();
 
   // remove the reference to the container for the previous view
   appConfig.activeView.container = null;
+  
+  // Clear any measurements that had been drawn
+  clearMeasurements();
 
   if (is3D) {
     // if the input view is a SceneView, set the viewpoint on the
@@ -98,12 +100,28 @@ function switchView() {
     appConfig.mapView.container = appConfig.container;
     appConfig.mapView.map.layers.push(bufferLayer, placesLayer);
     appConfig.activeView = appConfig.mapView;
+
+    appConfig.activeView.ui.add(measurement, "bottom-right");
+    measurement.view = appConfig.activeView;
+
+    appConfig.activeView.ui.add(layerListExpand,"bottom-left");
+    layerList.view = appConfig.activeView;
+    layerListExpand.view = appConfig.activeView;
+
     switchButton.value = "3D";
   } else {
     appConfig.sceneView.viewpoint = activeViewpoint;
     appConfig.sceneView.container = appConfig.container;
     appConfig.sceneView.map.layers.push(bufferLayer, placesLayer);
     appConfig.activeView = appConfig.sceneView;
+
+    appConfig.activeView.ui.add(measurement, "bottom-right");
+    measurement.view = appConfig.activeView;
+
+    appConfig.activeView.ui.add(layerListExpand,"bottom-left");
+    layerList.view = appConfig.activeView;
+    layerListExpand.view = appConfig.activeView;
+
     switchButton.value = "2D";
   }
 }
@@ -147,37 +165,84 @@ const basemapsExpand = new Expand({
   content: basemaps
 });
 
-appConfig.activeView.ui.add(["zoom", layerListExpand,basemapsExpand],"top-left");
+appConfig.activeView.ui.add([layerListExpand,basemapsExpand],"bottom-left");
 
-//############################# Borrar #############################//
-const serviceUrl = "http://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer";
+//############## Inicio ############### Configuracion para las mediciones #############################//
 
-appConfig.activeView.on("click", function (evt) {
-  const params = {
-    location: evt.mapPoint
-  };
+// Create new instance of the Measurement widget
+const measurement = new Measurement();
 
-  locator.locationToAddress(serviceUrl, params).then(
-    function (response) {
-      // Show the address found
-      const address = response.address;
-      showAddress(address, evt.mapPoint);
-    },
-    function (err) {
-      // Show no address found
-      showAddress("No address found.", evt.mapPoint);
-    }
-  );
+// Set-up event handlers for buttons and click events
+const distanceButton = document.getElementById("distance");
+const areaButton = document.getElementById("area");
+const clearButton = document.getElementById("clear");
 
+distanceButton.addEventListener("click", () => {
+  distanceMeasurement();
+});
+areaButton.addEventListener("click", () => {
+  areaMeasurement();
+});
+clearButton.addEventListener("click", () => {
+  clearMeasurements();
 });
 
-function showAddress(address, pt) {
-  appConfig.activeView.openPopup({
-    title: address,
-    content: +Math.round(pt.longitude * 100000) / 100000 + ", " + Math.round(pt.latitude * 100000) / 100000,
-    location: pt
-  });
+// Add the appropriate measurement UI to the bottom-right when activated
+appConfig.activeView.ui.add(measurement, "bottom-right");
+measurement.view = appConfig.activeView;
+
+// Call the appropriate DistanceMeasurement2D or DirectLineMeasurement3D
+function distanceMeasurement() {
+  const type = appConfig.activeView.type;
+  measurement.activeTool =
+    type.toUpperCase() === "2D" ? "distance" : "direct-line";
+  distanceButton.classList.add("active");
+  areaButton.classList.remove("active");
 }
+// Call the appropriate AreaMeasurement2D or AreaMeasurement3D
+function areaMeasurement() {
+  measurement.activeTool = "area";
+  distanceButton.classList.remove("active");
+  areaButton.classList.add("active");
+}
+// Clears all measurements
+function clearMeasurements() {
+  distanceButton.classList.remove("active");
+  areaButton.classList.remove("active");
+  measurement.clear();
+}
+
+//############## Final ############### Configuracion para las mediciones #############################//
+
+//############################# Borrar #############################//
+//const serviceUrl = "http://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer";
+//
+//appConfig.activeView.on("click", function (evt) {
+//  const params = {
+//    location: evt.mapPoint
+//  };
+//
+//  locator.locationToAddress(serviceUrl, params).then(
+//    function (response) {
+//      // Show the address found
+//      const address = response.address;
+//      showAddress(address, evt.mapPoint);
+//    },
+//    function (err) {
+//      // Show no address found
+//      showAddress("No address found.", evt.mapPoint);
+//    }
+//  );
+//
+//});
+//
+//function showAddress(address, pt) {
+//  appConfig.activeView.openPopup({
+//    title: address,
+//    content: +Math.round(pt.longitude * 100000) / 100000 + ", " + Math.round(pt.latitude * 100000) / 100000,
+//    location: pt
+//  });
+//}
 //############################# Borrar #############################//
 
 // Variables para los graficos
@@ -318,9 +383,11 @@ function clearGraphics() {
 }
 
 function clearCanvas(){
-  var ctx = acquisitions.getContext("2d");
-  ctx.clearRect(0, 0, acquisitions.width, acquisitions.height);
-  //ctx.beginPath();  
+  //myChart.clear();
+  var cty = acquisitions.getContext("2d");
+  cty.clearRect(0, 0, acquisitions.width, acquisitions.height);
+  //myChart.update();
+  //cty.beginPath();  
 }
 
 
@@ -358,6 +425,7 @@ function actualizarCategoria (){
   
         default:
           activeCategory2 = "0";
+          showPlaces(activeCategory2)
           break;
       }
       break;
@@ -366,7 +434,7 @@ function actualizarCategoria (){
       switch (activeCategory1) {
         case "20000":
           activeCategory2 = "32000";
-          showPlaces(activeCategory2);       
+          showPlaces(activeCategory2);
           break;
         
         case "21000":
@@ -376,12 +444,14 @@ function actualizarCategoria (){
     
         default:
           activeCategory2 = "0";
+          showPlaces(activeCategory2)
           break;
       }  
       break;
   
     default:
       activeCategory2 = "0";
+      showPlaces(activeCategory2)
       break;
 }
 }
@@ -407,7 +477,7 @@ function createWebStyle(color) {
 
         // Display map click search area and pass to places service
 async function showPlaces(placepoint) {
-  
+  console.log(placepoint);
   switch (placepoint) {
     case "30000":
             
@@ -417,112 +487,128 @@ async function showPlaces(placepoint) {
                 longitude: -77.033695,
                 latitude: -12.065190,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "08:30 AM"
               },
               points[1] = { //Create a point
                 type: "point",
                 longitude: -77.035019,
                 latitude: -12.066749,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "08:42 AM"
               },
               points[2] = { //Create a point
                 type: "point",
                 longitude: -77.038007,
                 latitude: -12.067325,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "08:50 AM"
               },
               points[3] = { //Create a point
                 type: "point",
                 longitude: -77.038067,
                 latitude: -12.067855,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "08:55 AM"
               },
               points[4] = { //Create a point
                 type: "point",
                 longitude: -77.038942,
                 latitude: -12.069893,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "09:10 AM"
               },
               points[5] = { //Create a point
                 type: "point",
                 longitude: -77.039325,
                 latitude: -12.070402,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "09:30 AM"
               },
               points[6] = { //Create a point
                 type: "point",
                 longitude: -77.039720,
                 latitude: -12.072351,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "09:50 AM"
               },
               points[7] = { //Create a point
                 type: "point",
                 longitude: -77.041058,
                 latitude: -12.072144,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "10:15 AM"
               },
               points[8] = { //Create a point
                 type: "point",
                 longitude: -77.041396,
                 latitude: -12.072810,
                 name : "",
-                tecnologia : "No-Aplica"                    
+                tecnologia : "No-Aplica",
+                hora: "10:30 AM"
               },
               points[9] = { //Create a point
                 type: "point",
                 longitude: -77.042018,
                 latitude: -12.072774,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "10:40 AM"
               },
               points[10] = { //Create a point
                 type: "point",
                 longitude: -77.044664,
                 latitude: -12.072745,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "11:00 AM"
               },
               points[11] = { //Create a point
                 type: "point",
                 longitude: -77.044822,
                 latitude: -12.073002,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "11:30 AM"
               },
               points[12] = { //Create a point
                 type: "point",
                 longitude: -77.045010,
                 latitude: -12.073049,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "12:00 PM"
               },
               points[13] = { //Create a point
                 type: "point",
                 longitude: -77.044997,
                 latitude: -12.073836,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "01:30 PM"
               },
               points[14] = { //Create a point
                 type: "point",
                 longitude: -77.045028,
                 latitude: -12.075090,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "Otra",
+                hora: "01:40 PM"
               },
               points[15] = { //Create a point
                 type: "point",
                 longitude: -77.045020,
                 latitude: -12.075858,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "01:55 PM"
               }
             ];
              break;
@@ -535,98 +621,112 @@ async function showPlaces(placepoint) {
                 longitude: -77.047588,
                 latitude: -12.075061,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "08:31 AM"
               },
               points[1] = { //Create a point
                 type: "point",
                 longitude: -77.046033,
                 latitude: -12.075140,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "08:39 AM"
               },
               points[2] = { //Create a point
                 type: "point",
                 longitude: -77.044316,
                 latitude: -12.075162,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "08:55 AM"
               },
               points[3] = { //Create a point
                 type: "point",
                 longitude: -77.043947,
                 latitude: -12.074847,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "09:10 AM"
               },
               points[4] = { //Create a point
                 type: "point",
                 longitude: -77.04292,
                 latitude: -12.07486,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "09:30 AM"
               },
               points[5] = { //Create a point
                 type: "point",
                 longitude: -77.04272,
                 latitude: -12.07526,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "09:50 AM"
               },
               points[6] = { //Create a point
                 type: "point",
                 longitude: -77.04225,
                 latitude: -12.07526,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "10:30 AM"
               },
               points[7] = { //Create a point
                 type: "point",
                 longitude: -77.0417,
                 latitude: -12.07524,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "10:42 AM"
               },
               points[8] = { //Create a point
                 type: "point",
                 longitude: -77.04152,
                 latitude: -12.07645,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "10:57 AM"
               },
               points[9] = { //Create a point
                 type: "point",
                 longitude: -77.03982,
                 latitude: -12.07619,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "11:21 AM"
               },
               points[10] = { //Create a point
                 type: "point",
                 longitude: -77.0382,
                 latitude: -12.07594,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "11:30 AM"
               },
               points[11] = { //Create a point
                 type: "point",
                 longitude: -77.03805,
                 latitude: -12.07697,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "11:53 AM"
               },
               points[12] = { //Create a point
                 type: "point",
                 longitude: -77.03678,
                 latitude: -12.07683,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "12:10 PM"
               },
               points[13] = { //Create a point
                 type: "point",
                 longitude: -77.03667,
                 latitude: -12.07791,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "01:30 PM"
               }
             ];                       
             break;
@@ -638,119 +738,136 @@ async function showPlaces(placepoint) {
                 longitude: -77.055816,
                 latitude: -12.091007,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "08:35 AM"
               },
               points[1] = { //Create a point
                 type: "point",
                 longitude: -77.050850,
                 latitude: -12.088260,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "08:57 AM"
               },
               points[2] = { //Create a point
                 type: "point",
                 longitude: -77.049648,
                 latitude: -12.088438,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "09:16 AM"
               },       
               points[3] = { //Create a point
                 type: "point",
                 longitude: -77.044544,
                 latitude: -12.087752,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "09:37 AM"
               },       
               points[4] = { //Create a point
                 type: "point",
                 longitude: -77.044225,
                 latitude: -12.089623,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "09:52 AM"
               },       
               points[5] = { //Create a point
                 type: "point",
                 longitude: -77.04449,
                 latitude: -12.08965,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "10:06 AM"
               },
               points[6] = { //Create a point
                 type: "point",
                 longitude: -77.04438,
                 latitude: -12.09058,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "10:23 AM"
               },       
               points[7] = { //Create a point
                 type: "point",
                 longitude: -77.04548,
                 latitude: -12.09075,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "10:39 AM"
               },       
               points[8] = { //Create a point
                 type: "point",
                 longitude: -77.04539,
                 latitude: -12.09153,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "11:30 AM"
               },       
               points[9] = { //Create a point
                 type: "point",
                 longitude: -77.04528,
                 latitude: -12.09227,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "12:00 PM"
               },       
               points[10] = { //Create a point
                 type: "point",
                 longitude: -77.04639,
                 latitude: -12.09244,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "01:30 PM"
               },       
               points[11] = { //Create a point
                 type: "point",
                 longitude: -77.04616,
                 latitude: -12.09398,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "01:47 PM"
               },       
               points[12] = { //Create a point
                 type: "point",
                 longitude: -77.04841,
                 latitude: -12.09433,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "01:59 PM"
               },       
               points[13] = { //Create a point
                 type: "point",
                 longitude: -77.04815,
                 latitude: -12.09632,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "02:23 PM"
               },       
               points[14] = { //Create a point
                 type: "point",
                 longitude: -77.04806,
                 latitude: -12.09714,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "02:37 PM"
               },       
               points[15] = { //Create a point
                 type: "point",
                 longitude: -77.04799,
                 latitude: -12.09753,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "02:49 PM"
               },       
               points[16] = { //Create a point
                 type: "point",
                 longitude: -77.04858,
                 latitude: -12.09832,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "03:00 PM"
               }
             ];                    
             break;
@@ -762,167 +879,192 @@ async function showPlaces(placepoint) {
                 longitude: -77.042431,
                 latitude: -12.084649,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "08:29 AM"
               },
               points[1] = { //Create a point
                 type: "point",
                 longitude: -77.041985,
                 latitude: -12.087816,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "08:47 AM"
               },
               points[2] = { //Create a point
                 type: "point",
                 longitude: -77.042510,
                 latitude: -12.087948,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "09:05 AM"
               },
               points[3] = { //Create a point
                 type: "point",
                 longitude: -77.04265,
                 latitude: -12.08811,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "09:27 AM"
               },
               points[4] = { //Create a point
                 type: "point",
                 longitude: -77.04217,
                 latitude: -12.08831,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "09:38 AM"
               },
               points[5] = { //Create a point
                 type: "point",
                 longitude: -77.04201,
                 latitude: -12.08956,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "09:59 AM"
               },
               points[6] = { //Create a point
                 type: "point",
                 longitude: -77.0417,
                 latitude: -12.08953,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "10:16 AM"
               },
               points[7] = { //Create a point
                 type: "point",
                 longitude: -77.04163,
                 latitude: -12.0902,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "10:30 AM"
               },
               points[8] = { //Create a point
                 type: "point",
                 longitude: -77.04082,
                 latitude: -12.09009,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "10:48 AM"
               },
               points[9] = { //Create a point
                 type: "point",
                 longitude: -77.04056,
                 latitude: -12.09163,
                 name : "",
-                tecnologia : "No"
+                tecnologia : "No",
+                hora: "11:00 AM"
               },
               points[10] = { //Create a point
                 type: "point",
                 longitude: -77.03976,
                 latitude: -12.0915,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "11:23 AM"
               },
               points[11] = { //Create a point
                 type: "point",
                 longitude: -77.03954,
                 latitude: -12.09306,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "11:37 AM"
               },
               points[12] = { //Create a point
                 type: "point",
                 longitude: -77.03863,
                 latitude: -12.09293,
                 name : "",
-                tecnologia : "Otra"
+                tecnologia : "Otra",
+                hora: "11:55 AM"
               },
               points[13] = { //Create a point
                 type: "point",
                 longitude: -77.0386,
                 latitude: -12.09315,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "12:14 PM"
               },
               points[14] = { //Create a point
                 type: "point",
                 longitude: -77.03834,
                 latitude: -12.09495,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "01:33 PM"
               },
               points[15] = { //Create a point
                 type: "point",
                 longitude: -77.03824,
                 latitude: -12.0958,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "01:51 PM"
               },
               points[16] = { //Create a point
                 type: "point",
                 longitude: -77.03687,
                 latitude: -12.0961,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "02:14 PM"
               },
               points[17] = { //Create a point
                 type: "point",
                 longitude: -77.03572,
                 latitude: -12.09644,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "02:30 PM"
               },
               points[18] = { //Create a point
                 type: "point",
                 longitude: -77.03542,
                 latitude: -12.09646,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "02:45 PM"
               },
               points[19] = { //Create a point
                 type: "point",
                 longitude: -77.03495,
                 latitude: -12.09578,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "03:00 PM"
               },
               points[20] = { //Create a point
                 type: "point",
                 longitude: -77.03451,
                 latitude: -12.09611,
                 name : "",
-                tecnologia : "No-Aplica"
+                tecnologia : "No-Aplica",
+                hora: "03:11 PM"
               },
               points[21] = { //Create a point
                 type: "point",
                 longitude: -77.03385,
                 latitude: -12.0963,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "03:30 PM"
               },
               points[22] = { //Create a point
                 type: "point",
                 longitude: -77.03394,
                 latitude: -12.09703,
                 name : "",
-                tecnologia : "Si"
+                tecnologia : "Si",
+                hora: "03:38 PM"
               }
             ];  
             break;  
     default:
+      points.length = 0;
       break;
   }
+  console.log(points);
 
   //inicializamos las variables de los totales por categoria
   let ctsi = 0;
@@ -957,20 +1099,22 @@ async function showPlaces(placepoint) {
   data.datasets[1].data = [ctno];
   data.datasets[2].data = [ctotra];
   config.options.scales.x.max = ctsi +ctno + ctotra;
-  myChart.update();
+  myChart.update('active');
 
   //Agregamos los paths a la variable polyline para que pueda graficarse
   for (let j = 0; j < points.length; j++) {
     polyline.paths.push([points[j].longitude, points[j].latitude]);
     points[j].name = "PV "+(j+1);
  }
+  console.log(polyline);
+
   const polylineGraphic = new Graphic({
      geometry: polyline,
      symbol: simpleLineSymbol
   });
   // Agrega el trazo recorrido por las personas
   bufferLayer.graphics.add(polylineGraphic);
-
+  console.log(bufferLayer);
   //Aplicando el color del marcador de punto de venta de acuerdo con el cambio de tecnología
   let colorIcon = "#000000";
 
@@ -1009,7 +1153,8 @@ async function showPlaces(placepoint) {
   infoDiv.addEventListener("click", async () => {
     appConfig.activeView.openPopup({
       location: {longitude: elemento2.longitude, latitude: elemento2.latitude},
-      title: elemento2.name
+      title: elemento2.name,
+      content: "Hora de visita " +elemento2.hora
     });
     appConfig.activeView.goTo(pointGraphic);
   });

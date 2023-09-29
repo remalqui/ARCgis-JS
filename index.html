@@ -19,6 +19,16 @@
            padding: 0;
          }
 
+         #toolbarDiv {
+           position: absolute;
+           top: 15px;
+           right: 15px;
+           cursor: default;
+           display: flex;
+           flex-direction: row;
+           flex-wrap: nowrap;
+         }
+
          #infoDiv {
            position: absolute;
            top: 15px;
@@ -28,6 +38,18 @@
          #infoDiv input {
            border: none;
            box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 2px;
+         }
+
+         .esri-widget--button.active,
+         .esri-widget--button.active:hover,
+         .esri-widget--button.active:focus {
+           cursor: default;
+           background-color: #999696;
+         }
+         .esri-widget--button.active path,
+         .esri-widget--button.active:hover path,
+         .esri-widget--button.active:focus path {
+           fill: #E4E4E4;
          }
 
          #viewDiv {
@@ -65,17 +87,17 @@
             --calcite-ui-icon-color: blue;
             --calcite-ui-background: rgba(0, 150, 255, 0.25);
             background-color: var(--calcite-ui-background);
-        }
-        calcite-chip:nth-child(2) {
-            --calcite-ui-icon-color: purple;
-            --calcite-ui-background: rgba(122, 129, 255, 0.25);
-            background-color: var(--calcite-ui-background);
-        }
-        calcite-chip:nth-child(3){
-            --calcite-ui-icon-color: black;
-            --calcite-ui-background: rgba(98, 95, 95, 0.25);
-            background-color: var(--calcite-ui-background);
-        }  
+         }
+         calcite-chip:nth-child(2) {
+             --calcite-ui-icon-color: purple;
+             --calcite-ui-background: rgba(122, 129, 255, 0.25);
+             background-color: var(--calcite-ui-background);
+         }
+         calcite-chip:nth-child(3){
+             --calcite-ui-icon-color: black;
+             --calcite-ui-background: rgba(98, 95, 95, 0.25);
+             background-color: var(--calcite-ui-background);
+         }  
 
        </style>
            <title>Tracking Indra</title>
@@ -128,6 +150,23 @@
         id="switch-btn"
         value="3D"
       />
+    </div>
+    <div id="toolbarDiv" class="esri-component esri-widget">
+      <button
+        id="distance"
+        class="esri-widget--button esri-interactive esri-icon-measure-line"
+        title="Distance Measurement Tool"
+      ></button>
+      <button
+        id="area"
+        class="esri-widget--button esri-interactive esri-icon-measure-area"
+        title="Area Measurement Tool"
+      ></button>
+      <button
+        id="clear"
+        class="esri-widget--button esri-interactive esri-icon-trash"
+        title="Clear Measurements"
+      ></button>
     </div>
   </calcite-shell>
 
