@@ -17,6 +17,7 @@ import Measurement from "@arcgis/core/widgets/Measurement.js";
 //############ Inicio ################# Variables #############################//
 //#############################################################################//
 configKey.apiKey = 'AAPK5e0a32880aae4a70a5dc38877ee2846e7o3jkkVClLIrbPdDakzoq7B3_SjkF9FedMbVnCjcS-ealECOVG9ReuAr9EeSmVEL';
+let infoPanel;
 let activeCategory = "0";  // categoria del vendor
 let activeCategory1 = "0"; // categoria de la fecha
 let activeCategory2 = "0"; // Categoria para mostrar las rutas
@@ -37,6 +38,7 @@ const placesLayer = new GraphicsLayer({
 const categorySelect = document.getElementById('categorySelect');
 const categorySelectDate = document.getElementById('categorySelectDate');
 const resultPanel = document.getElementById('results');
+const flow = document.getElementById("flow");
 var acquisitions = document.getElementById('acquisitions');
 
 
@@ -373,15 +375,17 @@ var myChart = new Chart(
 //############ Inicio ################# Funciones #############################//
 //#############################################################################//
 
-    // Clear graphics and results from the previous place search
+// Clear graphics and results from the previous place search
 function clearGraphics() {
   bufferLayer.removeAll(); 
   placesLayer.removeAll();  // Remove graphics from GraphicsLayer of previous buffer
   resultPanel.innerHTML = "";
+  if (infoPanel) infoPanel.remove();
   clearCanvas();
   polyline.paths.length = 0;
 }
 
+// limpia el grafico estadistico
 function clearCanvas(){
   //myChart.clear();
   var cty = acquisitions.getContext("2d");
@@ -389,7 +393,6 @@ function clearCanvas(){
   //myChart.update();
   //cty.beginPath();  
 }
-
 
 // Listener para el cambio de vendedor
 categorySelect.addEventListener("calciteComboboxChange", () => {
@@ -468,9 +471,53 @@ function createWebStyle(color) {
       family: "CalciteWebCoreIcons"
     }
   }
-
   return textSymbol;
 }
+
+// Get place details and display in the info panel
+async function getDetails(elemento2) {
+
+  // Set-up panel on the info for more place information
+  infoPanel = document.createElement("calcite-flow-item");
+  flow.appendChild(infoPanel);
+  infoPanel.heading = elemento2.name;
+  infoPanel.description = elemento2.tecnologia;
+  // Pass attributes from each place to the setAttribute() function
+  setAttribute("Description", "information", elemento2.tecnologia);
+  setAttribute(
+    "Address",
+    "map-pin",
+    elemento2.longitude
+  );
+  setAttribute("Phone", "mobile", elemento2.latitude);
+  setAttribute("Hours", "clock", elemento2.latitude);
+  setAttribute("Rating", "star", elemento2.latitude);
+  setAttribute(
+    "Email",
+    "email-address",
+    elemento2.latitude
+  );
+  // If another place is clicked in the info panel, then close
+  // the popup and remove the highlight of the previous feature
+  infoPanel.addEventListener("calciteFlowItemBack", async () => {
+    appConfig.activeView.closePopup();
+  });
+}
+// Take each place attribute and display on info panel
+function setAttribute(heading, icon, validValue) {
+  if (validValue) {
+    const element = document.createElement("calcite-block");
+    element.heading = heading;
+    element.description = validValue;
+    const attributeIcon = document.createElement("calcite-icon");
+    attributeIcon.icon = icon;
+    attributeIcon.slot = "icon";
+    attributeIcon.scale = "m";
+    element.appendChild(attributeIcon);
+    infoPanel.appendChild(element);
+  }
+}
+
 
 //##########################################################################//
 //############ Fin ################# Funciones #############################//
@@ -1147,7 +1194,6 @@ async function showPlaces(placepoint) {
    // Se agrega los nombres de los puntos a una lista
   var infoDiv = document.createElement("calcite-list-item");
   infoDiv.label = elemento2.name;
-  resultPanel.appendChild(infoDiv);
 
    // Se agrega un pop-up cuando se presione cada punto de venta.
   infoDiv.addEventListener("click", async () => {
@@ -1157,7 +1203,9 @@ async function showPlaces(placepoint) {
       content: "Hora de visita " +elemento2.hora
     });
     appConfig.activeView.goTo(pointGraphic);
+    getDetails(elemento2);
   });
+  resultPanel.appendChild(infoDiv);
  }); //aqui termina el for
 }
 
