@@ -1,8 +1,0 @@
-Implementar visualizacion en 3D
-Agregar mapas (satelital, open street, etc)
-Leyenda (pintar la casita por cambio de tecnologia)
-Implementar capas por cada tipo de cambio de tecnologia
-Agregar mas puntos de venta
-
-
-Investigar (Integracion con street view)

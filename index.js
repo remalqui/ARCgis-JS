@@ -12,6 +12,8 @@ import WebScene from "@arcgis/core/WebScene.js";
 //borrar lo de abajo
 import * as locator from "@arcgis/core/rest/locator.js";
 import Measurement from "@arcgis/core/widgets/Measurement.js";
+import Point from "@arcgis/core/geometry/Point.js";
+import * as webMercatorUtils from "@arcgis/core/geometry/support/webMercatorUtils.js";
 
 
 //############ Inicio ################# Variables #############################//
@@ -21,6 +23,17 @@ let infoPanel;
 let activeCategory = "0";  // categoria del vendor
 let activeCategory1 = "0"; // categoria de la fecha
 let activeCategory2 = "0"; // Categoria para mostrar las rutas
+const serviceUrl = "http://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer";
+
+let parametros = {
+      location:{
+      spatialReference: {
+        wkid: 102100
+      },
+      x: -8575565.214488855,
+      y: -1354558.2905600208
+     }
+    };
 
 // GraphicsLayer para las rutas de los vendedores
 const bufferLayer = new GraphicsLayer({
@@ -51,6 +64,8 @@ const appConfig = {
   activeView: null,
   container: "viewDiv" // use same container for views
 };
+
+
 
 const initialViewParams = {
   zoom: 14,
@@ -216,36 +231,6 @@ function clearMeasurements() {
 
 //############## Final ############### Configuracion para las mediciones #############################//
 
-//############################# Borrar #############################//
-//const serviceUrl = "http://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer";
-//
-//appConfig.activeView.on("click", function (evt) {
-//  const params = {
-//    location: evt.mapPoint
-//  };
-//
-//  locator.locationToAddress(serviceUrl, params).then(
-//    function (response) {
-//      // Show the address found
-//      const address = response.address;
-//      showAddress(address, evt.mapPoint);
-//    },
-//    function (err) {
-//      // Show no address found
-//      showAddress("No address found.", evt.mapPoint);
-//    }
-//  );
-//
-//});
-//
-//function showAddress(address, pt) {
-//  appConfig.activeView.openPopup({
-//    title: address,
-//    content: +Math.round(pt.longitude * 100000) / 100000 + ", " + Math.round(pt.latitude * 100000) / 100000,
-//    location: pt
-//  });
-//}
-//############################# Borrar #############################//
 
 // Variables para los graficos
 var polyline = {
@@ -295,11 +280,10 @@ beforeDatasetsDraw(chart,args,pluginOptions){
    const datapointArray = data.datasets.map((dataset, index) => {
      return dataset.data[0];
    })
-   //console.log(datapointArray)
+
 
    const accumulate = array => array.map((sum => value => sum+= value)(0));
    const cumulativeSumArray = accumulate(datapointArray);
-   //console.log(cumulativeSumArray);
    cumulativeSumArray.unshift(0);
 
    for (let i = 0; i < datapointArray.length; i++) {
@@ -394,6 +378,26 @@ function clearCanvas(){
   //cty.beginPath();  
 }
 
+function randomNumbers (numberInput){
+ var resultNumber = 0 ;
+ resultNumber = Math.floor((Math.random() * 100000000) + 1);
+ switch (numberInput) {
+  case 8:
+    resultNumber = padNumber(resultNumber);
+    break;
+  case 9:
+    resultNumber = 900000000 + resultNumber;
+  default:
+    break;
+ }
+ return resultNumber;
+}
+
+function padNumber(resultNumber){
+  var padResult = resultNumber.toString().padStart(8,'0');
+  return padResult;
+}
+
 // Listener para el cambio de vendedor
 categorySelect.addEventListener("calciteComboboxChange", () => {
   activeCategory = categorySelect.value;
@@ -412,7 +416,7 @@ categorySelectDate.addEventListener("calciteComboboxChange", () => {
 
 // Se setea un valor a un variable de acuerdo a la seleccion de vendedor y fecha
 function actualizarCategoria (){
-  //console.log(activeCategory, activeCategory1);
+
   switch (activeCategory) {
     case "10000":
       switch (activeCategory1) {
@@ -481,22 +485,13 @@ async function getDetails(elemento2) {
   infoPanel = document.createElement("calcite-flow-item");
   flow.appendChild(infoPanel);
   infoPanel.heading = elemento2.name;
-  infoPanel.description = elemento2.tecnologia;
+  infoPanel.description = "Cambio de tecnología : "+elemento2.tecnologia;
   // Pass attributes from each place to the setAttribute() function
-  setAttribute("Description", "information", elemento2.tecnologia);
-  setAttribute(
-    "Address",
-    "map-pin",
-    elemento2.longitude
-  );
-  setAttribute("Phone", "mobile", elemento2.latitude);
-  setAttribute("Hours", "clock", elemento2.latitude);
-  setAttribute("Rating", "star", elemento2.latitude);
-  setAttribute(
-    "Email",
-    "email-address",
-    elemento2.latitude
-  );
+  setAttribute("Cliente", "information", elemento2.cliente);
+  setAttribute("N. Documento", "license", elemento2.documento);
+  setAttribute("Telefono", "mobile", elemento2.telefono);
+  setAttribute("Direccion","map-pin",elemento2.direccion);
+  setAttribute("Hora Visita", "clock", elemento2.hora);
   // If another place is clicked in the info panel, then close
   // the popup and remove the highlight of the previous feature
   infoPanel.addEventListener("calciteFlowItemBack", async () => {
@@ -524,18 +519,22 @@ function setAttribute(heading, icon, validValue) {
 
         // Display map click search area and pass to places service
 async function showPlaces(placepoint) {
-  console.log(placepoint);
+
   switch (placepoint) {
     case "30000":
             
             points = [
               points[0] = { //Create a point
                 type: "point",
-                longitude: -77.033695,
-                latitude: -12.065190,
+                longitude: -77.03369500000004,
+                latitude: -12.065189836065104,
                 name : "",
                 tecnologia : "Si",
-                hora: "08:30 AM"
+                hora: "08:30 AM",
+                cliente: "Allisson Rojas",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[1] = { //Create a point
                 type: "point",
@@ -543,7 +542,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.066749,
                 name : "",
                 tecnologia : "No",
-                hora: "08:42 AM"
+                hora: "08:42 AM",
+                cliente: "David Valle",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[2] = { //Create a point
                 type: "point",
@@ -551,7 +554,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.067325,
                 name : "",
                 tecnologia : "Si",
-                hora: "08:50 AM"
+                hora: "08:50 AM",
+                cliente: "Ricardo Malqui",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[3] = { //Create a point
                 type: "point",
@@ -559,7 +566,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.067855,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "08:55 AM"
+                hora: "08:55 AM",
+                cliente: "Francisco Calderon",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[4] = { //Create a point
                 type: "point",
@@ -567,7 +578,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.069893,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "09:10 AM"
+                hora: "09:10 AM",
+                cliente: "Aaron Flores",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[5] = { //Create a point
                 type: "point",
@@ -575,7 +590,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.070402,
                 name : "",
                 tecnologia : "Otra",
-                hora: "09:30 AM"
+                hora: "09:30 AM",
+                cliente: "Carlos Salinas",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[6] = { //Create a point
                 type: "point",
@@ -583,7 +602,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.072351,
                 name : "",
                 tecnologia : "No",
-                hora: "09:50 AM"
+                hora: "09:50 AM",
+                cliente: "Flavio Salinas",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[7] = { //Create a point
                 type: "point",
@@ -591,7 +614,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.072144,
                 name : "",
                 tecnologia : "Otra",
-                hora: "10:15 AM"
+                hora: "10:15 AM",
+                cliente: "Isabel Torres",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[8] = { //Create a point
                 type: "point",
@@ -599,7 +626,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.072810,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "10:30 AM"
+                hora: "10:30 AM",
+                cliente: "Daniel Suarez",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[9] = { //Create a point
                 type: "point",
@@ -607,7 +638,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.072774,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "10:40 AM"
+                hora: "10:40 AM",
+                cliente: "Matías Catalán",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[10] = { //Create a point
                 type: "point",
@@ -615,7 +650,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.072745,
                 name : "",
                 tecnologia : "Si",
-                hora: "11:00 AM"
+                hora: "11:00 AM",
+                cliente: "Antonio Díaz",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[11] = { //Create a point
                 type: "point",
@@ -623,7 +662,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.073002,
                 name : "",
                 tecnologia : "Si",
-                hora: "11:30 AM"
+                hora: "11:30 AM",
+                cliente: "Juan Delgado",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[12] = { //Create a point
                 type: "point",
@@ -631,7 +674,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.073049,
                 name : "",
                 tecnologia : "No",
-                hora: "12:00 PM"
+                hora: "12:00 PM",
+                cliente: "Rodrigo Echeverría",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[13] = { //Create a point
                 type: "point",
@@ -639,7 +686,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.073836,
                 name : "",
                 tecnologia : "Si",
-                hora: "01:30 PM"
+                hora: "01:30 PM",
+                cliente: "Thomas Galdames",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[14] = { //Create a point
                 type: "point",
@@ -647,7 +698,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.075090,
                 name : "",
                 tecnologia : "Otra",
-                hora: "01:40 PM"
+                hora: "01:40 PM",
+                cliente: "Moisés González",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[15] = { //Create a point
                 type: "point",
@@ -655,7 +710,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.075858,
                 name : "",
                 tecnologia : "No",
-                hora: "01:55 PM"
+                hora: "01:55 PM",
+                cliente: "Daniel Gutiérrez",
+                documento: "",
+                telefono: "",
+                direccion: ""
               }
             ];
              break;
@@ -669,7 +728,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.075061,
                 name : "",
                 tecnologia : "No",
-                hora: "08:31 AM"
+                hora: "08:31 AM",
+                cliente: "Benjamín Kuscevic",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[1] = { //Create a point
                 type: "point",
@@ -677,7 +740,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.075140,
                 name : "",
                 tecnologia : "Otra",
-                hora: "08:39 AM"
+                hora: "08:39 AM",
+                cliente: "Felipe Loyola",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[2] = { //Create a point
                 type: "point",
@@ -685,7 +752,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.075162,
                 name : "",
                 tecnologia : "Si",
-                hora: "08:55 AM"
+                hora: "08:55 AM",
+                cliente: "Guillermo Maripán",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[3] = { //Create a point
                 type: "point",
@@ -693,7 +764,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.074847,
                 name : "",
                 tecnologia : "Si",
-                hora: "09:10 AM"
+                hora: "09:10 AM",
+                cliente: "Nayel Sepúlveda",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[4] = { //Create a point
                 type: "point",
@@ -701,7 +776,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.07486,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "09:30 AM"
+                hora: "09:30 AM",
+                cliente: "Eugenio Mena",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[5] = { //Create a point
                 type: "point",
@@ -709,7 +788,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.07526,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "09:50 AM"
+                hora: "09:50 AM",
+                cliente: "Guillermo Soto",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[6] = { //Create a point
                 type: "point",
@@ -717,7 +800,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.07526,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "10:30 AM"
+                hora: "10:30 AM",
+                cliente: "Gabriel Suazo",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[7] = { //Create a point
                 type: "point",
@@ -725,7 +812,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.07524,
                 name : "",
                 tecnologia : "No",
-                hora: "10:42 AM"
+                hora: "10:42 AM",
+                cliente: "Jonathan Villagra",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[8] = { //Create a point
                 type: "point",
@@ -733,7 +824,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.07645,
                 name : "",
                 tecnologia : "No",
-                hora: "10:57 AM"
+                hora: "10:57 AM",
+                cliente: "Williams Alarcón",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[9] = { //Create a point
                 type: "point",
@@ -741,7 +836,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.07619,
                 name : "",
                 tecnologia : "Si",
-                hora: "11:21 AM"
+                hora: "11:21 AM",
+                cliente: "Javier Altamirano",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[10] = { //Create a point
                 type: "point",
@@ -749,7 +848,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.07594,
                 name : "",
                 tecnologia : "Otra",
-                hora: "11:30 AM"
+                hora: "11:30 AM",
+                cliente: "Charles Aránguiz",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[11] = { //Create a point
                 type: "point",
@@ -757,7 +860,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.07697,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "11:53 AM"
+                hora: "11:53 AM",
+                cliente: "Lucas Assadi",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[12] = { //Create a point
                 type: "point",
@@ -765,7 +872,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.07683,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "12:10 PM"
+                hora: "12:10 PM",
+                cliente: "Alfred Canales",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[13] = { //Create a point
                 type: "point",
@@ -773,7 +884,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.07791,
                 name : "",
                 tecnologia : "Otra",
-                hora: "01:30 PM"
+                hora: "01:30 PM",
+                cliente: "Felipe Chamorro",
+                documento: "",
+                telefono: "",
+                direccion: ""
               }
             ];                       
             break;
@@ -786,7 +901,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.091007,
                 name : "",
                 tecnologia : "No",
-                hora: "08:35 AM"
+                hora: "08:35 AM",
+                cliente: "Jeison Fuentealba",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[1] = { //Create a point
                 type: "point",
@@ -794,7 +913,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.088260,
                 name : "",
                 tecnologia : "No",
-                hora: "08:57 AM"
+                hora: "08:57 AM",
+                cliente: "Arturo Vidal",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[2] = { //Create a point
                 type: "point",
@@ -802,7 +925,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.088438,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "09:16 AM"
+                hora: "09:16 AM",
+                cliente: "Maximiliano Guerrero",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[3] = { //Create a point
                 type: "point",
@@ -810,7 +937,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.087752,
                 name : "",
                 tecnologia : "Otra",
-                hora: "09:37 AM"
+                hora: "09:37 AM",
+                cliente: "Felipe Méndez",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[4] = { //Create a point
                 type: "point",
@@ -818,7 +949,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.089623,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "09:52 AM"
+                hora: "09:52 AM",
+                cliente: "Marcelino Núñez",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[5] = { //Create a point
                 type: "point",
@@ -826,7 +961,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.08965,
                 name : "",
                 tecnologia : "Otra",
-                hora: "10:06 AM"
+                hora: "10:06 AM",
+                cliente: "Darío Osorio",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[6] = { //Create a point
                 type: "point",
@@ -834,7 +973,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09058,
                 name : "",
                 tecnologia : "Si",
-                hora: "10:23 AM"
+                hora: "10:23 AM",
+                cliente: "César Pérez",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[7] = { //Create a point
                 type: "point",
@@ -842,7 +985,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09075,
                 name : "",
                 tecnologia : "No",
-                hora: "10:39 AM"
+                hora: "10:39 AM",
+                cliente: "Vicente Pizarro",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[8] = { //Create a point
                 type: "point",
@@ -850,7 +997,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09153,
                 name : "",
                 tecnologia : "Si",
-                hora: "11:30 AM"
+                hora: "11:30 AM",
+                cliente: "Erick Pulgar",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[9] = { //Create a point
                 type: "point",
@@ -858,7 +1009,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09227,
                 name : "",
                 tecnologia : "Si",
-                hora: "12:00 PM"
+                hora: "12:00 PM",
+                cliente: "Diego Valdés",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[10] = { //Create a point
                 type: "point",
@@ -866,7 +1021,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09244,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "01:30 PM"
+                hora: "01:30 PM",
+                cliente: "Julián Alfaro",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[11] = { //Create a point
                 type: "point",
@@ -874,7 +1033,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09398,
                 name : "",
                 tecnologia : "No",
-                hora: "01:47 PM"
+                hora: "01:47 PM",
+                cliente: "Alexander Aravena",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[12] = { //Create a point
                 type: "point",
@@ -882,7 +1045,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09433,
                 name : "",
                 tecnologia : "Otra",
-                hora: "01:59 PM"
+                hora: "01:59 PM",
+                cliente: "Bruno Barticciotto",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[13] = { //Create a point
                 type: "point",
@@ -890,7 +1057,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09632,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "02:23 PM"
+                hora: "02:23 PM",
+                cliente: "Ben Diaz",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[14] = { //Create a point
                 type: "point",
@@ -898,7 +1069,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09714,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "02:37 PM"
+                hora: "02:37 PM",
+                cliente: "Marcos Bolados",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[15] = { //Create a point
                 type: "point",
@@ -906,7 +1081,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09753,
                 name : "",
                 tecnologia : "No",
-                hora: "02:49 PM"
+                hora: "02:49 PM",
+                cliente: "Clemente Montes",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },       
               points[16] = { //Create a point
                 type: "point",
@@ -914,7 +1093,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09832,
                 name : "",
                 tecnologia : "Si",
-                hora: "03:00 PM"
+                hora: "03:00 PM",
+                cliente: "Damián Pizarro",
+                documento: "",
+                telefono: "",
+                direccion: ""
               }
             ];                    
             break;
@@ -927,7 +1110,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.084649,
                 name : "",
                 tecnologia : "Otra",
-                hora: "08:29 AM"
+                hora: "08:29 AM",
+                cliente: "Alexis Sánchez",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[1] = { //Create a point
                 type: "point",
@@ -935,7 +1122,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.087816,
                 name : "",
                 tecnologia : "Si",
-                hora: "08:47 AM"
+                hora: "08:47 AM",
+                cliente: "Barry Allen",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[2] = { //Create a point
                 type: "point",
@@ -943,7 +1134,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.087948,
                 name : "",
                 tecnologia : "Otra",
-                hora: "09:05 AM"
+                hora: "09:05 AM",
+                cliente: "Iris West-Allen",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[3] = { //Create a point
                 type: "point",
@@ -951,7 +1146,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.08811,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "09:27 AM"
+                hora: "09:27 AM",
+                cliente: "Catilin Snow",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[4] = { //Create a point
                 type: "point",
@@ -959,7 +1158,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.08831,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "09:38 AM"
+                hora: "09:38 AM",
+                cliente: "Eddie Thawne",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[5] = { //Create a point
                 type: "point",
@@ -967,7 +1170,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.08956,
                 name : "",
                 tecnologia : "No",
-                hora: "09:59 AM"
+                hora: "09:59 AM",
+                cliente: "Cisco Ramon",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[6] = { //Create a point
                 type: "point",
@@ -975,7 +1182,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.08953,
                 name : "",
                 tecnologia : "No",
-                hora: "10:16 AM"
+                hora: "10:16 AM",
+                cliente: "Harrison Wells",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[7] = { //Create a point
                 type: "point",
@@ -983,7 +1194,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.0902,
                 name : "",
                 tecnologia : "No",
-                hora: "10:30 AM"
+                hora: "10:30 AM",
+                cliente: "Joe West",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[8] = { //Create a point
                 type: "point",
@@ -991,7 +1206,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09009,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "10:48 AM"
+                hora: "10:48 AM",
+                cliente: "Wally West",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[9] = { //Create a point
                 type: "point",
@@ -999,7 +1218,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09163,
                 name : "",
                 tecnologia : "No",
-                hora: "11:00 AM"
+                hora: "11:00 AM",
+                cliente: "Clifford DeVoe",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[10] = { //Create a point
                 type: "point",
@@ -1007,7 +1230,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.0915,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "11:23 AM"
+                hora: "11:23 AM",
+                cliente: "Ralph Dibny",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[11] = { //Create a point
                 type: "point",
@@ -1015,7 +1242,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09306,
                 name : "",
                 tecnologia : "Otra",
-                hora: "11:37 AM"
+                hora: "11:37 AM",
+                cliente: "Cecile Horton",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[12] = { //Create a point
                 type: "point",
@@ -1023,7 +1254,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09293,
                 name : "",
                 tecnologia : "Otra",
-                hora: "11:55 AM"
+                hora: "11:55 AM",
+                cliente: "Nora West-Allen",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[13] = { //Create a point
                 type: "point",
@@ -1031,7 +1266,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09315,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "12:14 PM"
+                hora: "12:14 PM",
+                cliente: "Orlin Dwyer",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[14] = { //Create a point
                 type: "point",
@@ -1039,7 +1278,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09495,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "01:33 PM"
+                hora: "01:33 PM",
+                cliente: "Nora Allen",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[15] = { //Create a point
                 type: "point",
@@ -1047,7 +1290,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.0958,
                 name : "",
                 tecnologia : "Si",
-                hora: "01:51 PM"
+                hora: "01:51 PM",
+                cliente: "Henry Allen",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[16] = { //Create a point
                 type: "point",
@@ -1055,7 +1302,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.0961,
                 name : "",
                 tecnologia : "Si",
-                hora: "02:14 PM"
+                hora: "02:14 PM",
+                cliente: "Jay Garrick",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[17] = { //Create a point
                 type: "point",
@@ -1063,7 +1314,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09644,
                 name : "",
                 tecnologia : "Si",
-                hora: "02:30 PM"
+                hora: "02:30 PM",
+                cliente: "Oliver Queen",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[18] = { //Create a point
                 type: "point",
@@ -1071,7 +1326,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09646,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "02:45 PM"
+                hora: "02:45 PM",
+                cliente: "Leonard Snart",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[19] = { //Create a point
                 type: "point",
@@ -1079,7 +1338,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09578,
                 name : "",
                 tecnologia : "Si",
-                hora: "03:00 PM"
+                hora: "03:00 PM",
+                cliente: "Linda Park",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[20] = { //Create a point
                 type: "point",
@@ -1087,7 +1350,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09611,
                 name : "",
                 tecnologia : "No-Aplica",
-                hora: "03:11 PM"
+                hora: "03:11 PM",
+                cliente: "Patty Spivot",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[21] = { //Create a point
                 type: "point",
@@ -1095,7 +1362,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.0963,
                 name : "",
                 tecnologia : "Si",
-                hora: "03:30 PM"
+                hora: "03:30 PM",
+                cliente: "Jesse Wells",
+                documento: "",
+                telefono: "",
+                direccion: ""
               },
               points[22] = { //Create a point
                 type: "point",
@@ -1103,7 +1374,11 @@ async function showPlaces(placepoint) {
                 latitude: -12.09703,
                 name : "",
                 tecnologia : "Si",
-                hora: "03:38 PM"
+                hora: "03:38 PM",
+                cliente: "Kamilla Hwang",
+                documento: "",
+                telefono: "",
+                direccion: ""
               }
             ];  
             break;  
@@ -1111,49 +1386,75 @@ async function showPlaces(placepoint) {
       points.length = 0;
       break;
   }
-  console.log(points);
 
-  //inicializamos las variables de los totales por categoria
-  let ctsi = 0;
-  let ctno = 0;
-  let ctotra = 0;
-
-  //Seteamos los valores de las variables
-  let points2= [];
-  points.forEach(elemento => {
-    switch (elemento.tecnologia) {
-      case "Si":
-        ctsi = ctsi+1;
-        points2.push(elemento);
-        break;
-
-      case "No":
-        ctno = ctno+1;
-        points2.push(elemento);
-        break;
-
-      case "Otra":
-        ctotra = ctotra+1;
-        points2.push(elemento);
-        break;        
-      default:
-        break;
-    }
-  });
-
-  //Actualizamos las cantidades totales por cambio de tecnologia
-  data.datasets[0].data = [ctsi];
-  data.datasets[1].data = [ctno];
-  data.datasets[2].data = [ctotra];
-  config.options.scales.x.max = ctsi +ctno + ctotra;
-  myChart.update('active');
 
   //Agregamos los paths a la variable polyline para que pueda graficarse
   for (let j = 0; j < points.length; j++) {
     polyline.paths.push([points[j].longitude, points[j].latitude]);
-    points[j].name = "PV "+(j+1);
+    
+    //Asignamos el numero de cliente
+    points[j].name = "PV15072-"+(j+1);
+    
+    //Asignamos el numero aleatorio de documento
+    points[j].documento = randomNumbers(8);
+
+    //Asignamos el numero aleatorio de documento
+    points[j].telefono = randomNumbers(9);
+
+    //Asignamos la direccion
+    let conversion = webMercatorUtils.lngLatToXY(points[j].longitude, points[j].latitude);
+
+    parametros.location.x = conversion[0];
+    parametros.location.y = conversion[1];
+  
+    locator.locationToAddress(serviceUrl, parametros).then(
+      function (response) {
+        // Show the address found
+        points[j].direccion = response.address;
+      },
+      function (err) {
+        // Show no address found
+        points[j].direccion = "No se encontró la dirección.";
+      }
+    );
+
  }
-  console.log(polyline);
+
+    //inicializamos las variables de los totales por categoria
+    let ctsi = 0;
+    let ctno = 0;
+    let ctotra = 0;
+  
+    //Seleccionamos los puntos que vamos a graficar y actualizamos los valores totales de las categorias
+    // de cambio de tecnologia
+    let points2= [];
+    points.forEach(elemento => {
+      switch (elemento.tecnologia) {
+        case "Si":
+          ctsi = ctsi+1;
+          points2.push(elemento);
+          break;
+  
+        case "No":
+          ctno = ctno+1;
+          points2.push(elemento);
+          break;
+  
+        case "Otra":
+          ctotra = ctotra+1;
+          points2.push(elemento);
+          break;        
+        default:
+          break;
+      }
+    });
+  
+    //Actualizamos las cantidades totales por cambio de tecnologia
+    data.datasets[0].data = [ctsi];
+    data.datasets[1].data = [ctno];
+    data.datasets[2].data = [ctotra];
+    config.options.scales.x.max = ctsi +ctno + ctotra;
+    myChart.update('active');
 
   const polylineGraphic = new Graphic({
      geometry: polyline,
@@ -1161,12 +1462,13 @@ async function showPlaces(placepoint) {
   });
   // Agrega el trazo recorrido por las personas
   bufferLayer.graphics.add(polylineGraphic);
-  console.log(bufferLayer);
+
   //Aplicando el color del marcador de punto de venta de acuerdo con el cambio de tecnología
   let colorIcon = "#000000";
 
   points2.forEach(elemento2 => {
 
+    //agregamos lo valores aleatorios para el documento,telefono, idcliente
     switch (elemento2.tecnologia) {
       case "Si":
         colorIcon = "#0000FF";
@@ -1197,6 +1499,7 @@ async function showPlaces(placepoint) {
 
    // Se agrega un pop-up cuando se presione cada punto de venta.
   infoDiv.addEventListener("click", async () => {
+    
     appConfig.activeView.openPopup({
       location: {longitude: elemento2.longitude, latitude: elemento2.latitude},
       title: elemento2.name,
